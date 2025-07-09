@@ -55,14 +55,14 @@ const AppLayout: React.FC = () => {
   };
 
   const handleLogin = () => {
-    if (email === 'admin' && password === 'admin') {
+    if (email === 'admin@gmail.com' && password === 'admin') {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('searchCount', '0');
       setIsLoggedIn(true);
       setSearchCount(0);
       setShowLoginModal(false);
     } else {
-      alert('Invalid credentials. Use admin/admin for demo.');
+      alert('Invalid credentials. Use admin@gmail.com/admin for demo.');
     }
   };
 
