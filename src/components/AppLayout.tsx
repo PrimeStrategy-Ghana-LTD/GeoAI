@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Search, LogOut, PenIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
+import SearchChatsInterface from './SearchChatsInterface';
 
 const AppLayout: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'chat'>('home');
@@ -17,6 +18,7 @@ const AppLayout: React.FC = () => {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showWelcomeEffect, setShowWelcomeEffect] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>('1');
+  const [showSearchPopup, setShowSearchPopup] = useState(false);
   const navigate = useNavigate();
 
   const suggestions = [
@@ -224,6 +226,7 @@ const AppLayout: React.FC = () => {
               <Button
                 variant="ghost"
                 className="w-full text-gray-300 hover:bg-gray-700 flex items-center justify-start gap-2"
+                onClick={() => setShowSearchPopup(true)}
               >
                 <Search className="w-4 h-4" />
                 <span className="font-medium">Search Chats</span>
@@ -355,6 +358,19 @@ const AppLayout: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Search Chats Popup */}
+      {showSearchPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <SearchChatsInterface 
+            onClose={() => setShowSearchPopup(false)}
+            onChatSelect={(chatId) => {
+              setActiveChat(chatId);
+              setShowSearchPopup(false);
+            }}
+          />
         </div>
       )}
 
