@@ -2,23 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Search, LogOut, PenIcon } from 'lucide-react';
+import { Search, LogOut, PenIcon, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
+import SignupModal from './SignupModal';
 import SearchChatsInterface from './SearchChatsInterface';
 
 const AppLayout: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'chat'>('home');
   const [inputValue, setInputValue] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [searchCount, setSearchCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [showWelcomeEffect, setShowWelcomeEffect] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>('1');
   const [showSearchPopup, setShowSearchPopup] = useState(false);
+  const [welcomeName, setWelcomeName] = useState('');
   const navigate = useNavigate();
 
   const suggestions = [
@@ -34,24 +37,17 @@ const AppLayout: React.FC = () => {
     { id: '3', title: "Ramsa site", lastMessage: "Government approved areas" }
   ];
 
-  // Initialize state from localStorage
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const count = parseInt(localStorage.getItem('searchCount') || '0', 10);
+    const savedName = localStorage.getItem('userName') || '';
     setIsLoggedIn(loggedIn);
     setSearchCount(count);
-  }, []);
-
-  // Handle welcome effect timeout
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (showWelcomeEffect) {
-      timer = setTimeout(() => {
-        setShowWelcomeEffect(false);
-      }, 10000);
+    setWelcomeName(savedName);
+    if (loggedIn) {
+      setCurrentView('chat');
     }
-    return () => clearTimeout(timer);
-  }, [showWelcomeEffect]);
+  }, []);
 
   const handleSendMessage = () => {
     if (!isLoggedIn && searchCount >= 3) {
@@ -74,20 +70,41 @@ const AppLayout: React.FC = () => {
     if (email === 'admin@gmail.com' && password === 'admin') {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('searchCount', '0');
+      localStorage.setItem('userName', 'Admin User');
       setIsLoggedIn(true);
       setSearchCount(0);
       setShowLoginModal(false);
       setEmail('');
       setPassword('');
-      setShowWelcomeEffect(true);
+      setCurrentView('chat');
+      setActiveChat('1');
     } else {
       alert('Invalid credentials. Use admin@gmail.com/admin for demo.');
+    }
+  };
+
+  const handleSignup = () => {
+    if (name && email && password) {
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('searchCount', '0');
+      localStorage.setItem('userName', name);
+      setIsLoggedIn(true);
+      setSearchCount(0);
+      setShowSignupModal(false);
+      setName('');
+      setEmail('');
+      setPassword('');
+      setCurrentView('chat');
+      setActiveChat('1');
+    } else {
+      alert('Please fill all fields');
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('searchCount');
+    localStorage.removeItem('userName');
     setIsLoggedIn(false);
     setSearchCount(0);
     setShowAccountMenu(false);
@@ -97,7 +114,6 @@ const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#2b2c33] text-white">
-      {/* Homepage */}
       {currentView === 'home' && (
         <div className="relative p-4">
           <div className="flex items-center justify-between">
@@ -105,39 +121,50 @@ const AppLayout: React.FC = () => {
               <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
               <span className="text-gray-300 text-lg">Land-Ai</span>
             </div>
-            <button 
-              onClick={() => isLoggedIn ? setShowAccountMenu(!showAccountMenu) : setShowLoginModal(true)}
-              className={`
-                flex items-center gap-2 px-3 py-1 rounded-md
-                ${showWelcomeEffect ? 
-                  'bg-gradient-to-r from-green-500/30 to-cyan-500/30 text-white border border-green-400/50 shadow-lg shadow-green-500/20' : 
-                  isLoggedIn ? 
-                    'bg-green-500/10 text-green-400 border border-green-400/30 hover:bg-green-500/20' : 
-                    'bg-gray-700/50 text-gray-300 hover:bg-gray-700 border border-gray-600/30'}
-                transition-all duration-300
-              `}
-            >
-              <img 
-                src="/images/menu.png" 
-                alt="Menu Icon" 
-                className={`w-5 h-5 ${isLoggedIn ? 'filter-green-400' : ''}`}
-              />
-              <span className="font-medium">
-                {showWelcomeEffect ? 'Welcome!' : isLoggedIn ? 'Account' : 'Login'}
-              </span>
-              {(showWelcomeEffect || isLoggedIn) && (
-                <span className={`ml-1 h-2 w-2 rounded-full ${showWelcomeEffect ? 'bg-white animate-ping' : 'bg-green-400 animate-pulse'}`}></span>
+            
+            <div className="flex items-center gap-4">
+              {isLoggedIn ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowAccountMenu(!showAccountMenu)}
+                    className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
+                  >
+                    <User className="w-4 h-4" />
+                  </button>
+                  
+                  {showAccountMenu && (
+                    <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 w-48">
+                      <div className="p-2 border-b border-gray-700 text-sm text-white">
+                        {welcomeName || 'Account'}
+                      </div>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-700 text-red-400 flex items-center gap-2 text-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => setShowLoginModal(true)}
+                    className="text-gray-300 hover:text-white font-medium"
+                  >
+                    Log in
+                  </button>
+                  <button 
+                    onClick={() => setShowSignupModal(true)}
+                    className="text-blue-400 hover:text-blue-300 font-medium"
+                  >
+                    Sign up for free
+                  </button>
+                </>
               )}
-            </button>
-          </div>
-
-          {showWelcomeEffect && (
-            <div className="flex justify-center mt-2">
-              <div className="flex items-center gap-1 bg-gradient-to-r from-green-500/20 to-cyan-500/20 text-green-400 px-3 py-1 rounded-full text-xs border border-green-400/30">
-                ✓ Unlimited searches enabled
-              </div>
             </div>
-          )}
+          </div>
 
           <div className="flex justify-center mt-2">
             <div className="flex items-center gap-1 bg-white text-gray-900 px-3 py-1 rounded-full">
@@ -206,10 +233,8 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Mode View */}
       {currentView === 'chat' && (
         <div className="flex h-screen">
-          {/* Sidebar */}
           <div className="w-64 bg-[#2b2c33] border-r border-gray-700 flex flex-col">
             <div className="p-4 border-b border-gray-700">
               <div className="flex items-center gap-2 text-white text-lg mb-4">
@@ -233,7 +258,6 @@ const AppLayout: React.FC = () => {
               </Button>
             </div>
             
-            {/* Chats List */}
             <div className="p-4 overflow-y-auto flex-1">
               <h3 className="text-sm font-medium text-gray-400 mb-3">Chats</h3>
               <div className="space-y-2">
@@ -250,7 +274,6 @@ const AppLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* Logout and Terms */}
             <div className="mt-auto p-4 border-t border-gray-700">
               <button 
                 onClick={handleLogout}
@@ -266,36 +289,34 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          {/* Chat Content */}
           <div className="flex-1 flex flex-col bg-[#2b2c33]">
-            {/* Top right menu */}
             <div className="flex justify-end p-4 relative">
-              <button 
-                onClick={() => setShowAccountMenu(!showAccountMenu)}
-                className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-gray-700"
-              >
-                <img src="/images/menu.png" alt="Menu" className="w-5 h-5" />
-              </button>
-              
-              {showAccountMenu && (
-                <div className="absolute right-4 top-12 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 w-48">
-                  <div className="p-2 border-b border-gray-700 text-sm text-white">
-                    Account
+              <div className="relative">
+                <button 
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                  className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
+                >
+                  <User className="w-4 h-4" />
+                </button>
+                
+                {showAccountMenu && (
+                  <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 w-48">
+                    <div className="p-2 border-b border-gray-700 text-sm text-white">
+                      {welcomeName || 'Account'}
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-700 text-red-400 flex items-center gap-2 text-sm"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
                   </div>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-700 text-red-400 flex items-center gap-2 text-sm"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            {/* Chat messages */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center">
-              {/* User Prompt */}
               <div className="flex items-center gap-2 mb-6 w-full max-w-2xl">
                 <div className="w-8 h-8 rounded-full bg-[#3b3c44] flex items-center justify-center">
                   <img src="/images/lightning-icon.png" alt="User" className="w-4 h-4" />
@@ -306,7 +327,6 @@ const AppLayout: React.FC = () => {
                 </div>
               </div>
 
-              {/* AI Response */}
               <div className="bg-[#3b3c44] text-white rounded-xl p-4 w-full max-w-2xl">
                 <div className="flex items-start gap-2 mb-2">
                   <img src="/images/Vector-star.png" alt="AI" className="w-4 h-4 mt-0.5" />
@@ -334,7 +354,6 @@ const AppLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* Input area */}
             <div className="p-4 border-t border-gray-700">
               <div className="relative max-w-2xl mx-auto">
                 <Input
@@ -343,7 +362,6 @@ const AppLayout: React.FC = () => {
                   placeholder="I'm looking for..."
                   className="pl-10 pr-10 bg-[#3b3c44] text-white rounded-full border-none"
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  disabled={!isLoggedIn && searchCount >= 3}
                 />
                 <img
                   src="/images/Vector-star.png"
@@ -361,20 +379,6 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Search Chats Popup */}
-      {showSearchPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <SearchChatsInterface 
-            onClose={() => setShowSearchPopup(false)}
-            onChatSelect={(chatId) => {
-              setActiveChat(chatId);
-              setShowSearchPopup(false);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Login Modal with click outside to close */}
       {showLoginModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
@@ -388,8 +392,48 @@ const AppLayout: React.FC = () => {
               setEmail={setEmail}
               password={password}
               setPassword={setPassword}
+              onSwitchToSignup={() => {
+                setShowLoginModal(false);
+                setShowSignupModal(true);
+              }}
             />
           </div>
+        </div>
+      )}
+
+      {showSignupModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          onClick={() => setShowSignupModal(false)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <SignupModal 
+              onClose={() => setShowSignupModal(false)}
+              onSignup={handleSignup}
+              name={name}
+              setName={setName}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              onSwitchToLogin={() => {
+                setShowSignupModal(false);
+                setShowLoginModal(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {showSearchPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <SearchChatsInterface 
+            onClose={() => setShowSearchPopup(false)}
+            onChatSelect={(chatId) => {
+              setActiveChat(chatId);
+              setShowSearchPopup(false);
+            }}
+          />
         </div>
       )}
     </div>

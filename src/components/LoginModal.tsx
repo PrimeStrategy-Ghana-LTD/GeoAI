@@ -1,7 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { X } from 'lucide-react';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -10,6 +11,7 @@ interface LoginModalProps {
   setEmail: (email: string) => void;
   password: string;
   setPassword: (password: string) => void;
+  onSwitchToSignup: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ 
@@ -18,7 +20,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
   email, 
   setEmail, 
   password, 
-  setPassword 
+  setPassword,
+  onSwitchToSignup
 }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,103 +29,146 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
-      <Card className="bg-[#2b2c33] text-white p-8 rounded-xl w-full max-w-sm shadow-xl">
-        <div className="flex justify-end">
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-[#2b2c33] rounded-xl p-6 w-full max-w-md border border-gray-700 relative"
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white"
+        >
+          <X className="w-5 h-5" />
+        </button>
         
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Log In</h2>
+          <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-gray-400">Log in to continue your land search</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#3b3c44] text-white border-gray-600 focus:border-cyan-500 focus:ring-cyan-500"
+              className="w-full bg-[#3b3c44] text-white border-gray-600"
+              placeholder="your@email.com"
               required
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#3b3c44] text-white border-gray-600 focus:border-cyan-500 focus:ring-cyan-500"
+              className="w-full bg-[#3b3c44] text-white border-gray-600"
+              placeholder="••••••••"
               required
             />
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-cyan-500 text-white hover:bg-cyan-600 transition-colors"
-          >
-            Log in
-          </Button>
-        </form>
+          <div className="text-right">
+            <button 
+              type="button"
+              className="text-sm text-blue-400 hover:text-blue-300"
+            >
+              Forgot password?
+            </button>
+          </div>
 
-        <div className="flex justify-between mt-4 mb-6 text-sm text-gray-400">
-          <a href="#" className="hover:underline text-cyan-400">Sign Up</a>
-          <a href="#" className="hover:underline text-cyan-400">Forgot Password</a>
-          <a href="#" className="hover:underline text-cyan-400">Contact Us</a>
-        </div>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium"
+            >
+              Log In
+            </Button>
+          </motion.div>
+        </form>
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-700"></div>
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-[#2b2c33] px-2 text-sm text-gray-500">or</span>
+            <span className="bg-[#2b2c33] px-2 text-sm text-gray-400">or continue with</span>
           </div>
         </div>
 
-        <div className="space-y-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <Button
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
           >
-            <img src="/images/google-icon.png" alt="Google" className="w-4 h-4" />
-            Log in with Google
+            <img 
+              src="/images/google-icon.png" 
+              alt="Google" 
+              className="w-4 h-4"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://www.google.com/favicon.ico';
+              }}
+            />
+            Google
           </Button>
           <Button
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
           >
-            <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-4 h-4" />
-            Log in with Microsoft
+            <img 
+              src="/images/microsoft-icon.png" 
+              alt="Microsoft" 
+              className="w-4 h-4"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://www.microsoft.com/favicon.ico';
+              }}
+            />
+            Microsoft
           </Button>
           <Button
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
           >
-            <img src="/images/apple-icon.png" alt="Apple" className="w-4 h-4" />
-            Log in with Apple
+            <img 
+              src="/images/apple-icon.png" 
+              alt="Apple" 
+              className="w-4 h-4"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://www.apple.com/favicon.ico';
+              }}
+            />
+            Apple
           </Button>
           <Button
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 bg-[#3b3c44] text-white border-gray-700 hover:bg-gray-700"
           >
-            <img src="/images/iphone-icon.png" alt="Phone" className="w-4 h-4" />
-            Log in with Phone
+            <img 
+              src="/images/iphone-icon.png" 
+              alt="Phone" 
+              className="w-4 h-4"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/15/15874.png';
+              }}
+            />
+            Phone
           </Button>
         </div>
 
-        <div className="flex justify-center gap-4 text-xs text-gray-500 mb-2">
-          <a href="#" className="hover:underline">Terms of Use</a>
-          <a href="#" className="hover:underline">Privacy Policy</a>
+        <div className="text-center text-sm text-gray-400">
+          Don't have an account?{' '}
+          <button 
+            onClick={onSwitchToSignup}
+            className="text-blue-400 hover:text-blue-300 font-medium"
+          >
+            Sign up
+          </button>
         </div>
-
-        <div className="text-center text-xs text-gray-500">
-          © 2025 Land-Ai
-        </div>
-      </Card>
+      </motion.div>
     </div>
   );
 };
