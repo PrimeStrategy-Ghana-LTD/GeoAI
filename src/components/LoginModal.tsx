@@ -33,24 +33,26 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
   try {
     const result = await loginUser(email, password);
-    console.log("Login result:", result); // ✅ Debug log
+    console.log("Login result:", result); // ✅ Check the structure of the response
 
-    if (!result?.token) {
+    // Check if result has token directly or inside a 'data' or 'access_token' property
+    const token = result.token || result.access_token || result?.data?.token;
+
+    if (!token) {
       throw new Error("Login failed: No token received");
     }
 
-    localStorage.setItem("token", result.token);
+    localStorage.setItem("token", token);
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("searchCount", "0");
     localStorage.setItem("userName", email);
 
     onLogin();  // Notify parent
     onClose();  // Close modal
-  }catch (error: any) {
-  console.error("Login error:", error);
-  setError(error.message || "Login failed");
-}
-
+  } catch (error: any) {
+    console.error("Login error:", error);
+    setError(error.message || "Login failed");
+  }
 };
 
 

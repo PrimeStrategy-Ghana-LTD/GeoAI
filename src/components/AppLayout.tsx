@@ -73,29 +73,26 @@ const AppLayout: React.FC = () => {
  // Updated auth functions in AppLayout.tsx
 const handleLogin = async () => {
   try {
-    const response = await loginUser(email, password);
-    
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('searchCount', '0');
-    localStorage.setItem('userName', response.user?.name || email);
-    localStorage.setItem('token', response.token);
-    if (response.user?.id) {
-      localStorage.setItem('userId', response.user.id);
+    const result = await loginUser(email, password);
+
+    if (!result?.token) {
+      throw new Error("Login failed: No token received");
     }
-    
+
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("searchCount", "0");
+    localStorage.setItem("userName", email);
+
     setIsLoggedIn(true);
     setSearchCount(0);
-    setShowLoginModal(false);
-    setEmail('');
-    setPassword('');
-    setCurrentView('chat');
-    setActiveChat('1');
-    
-  } catch (error) {
-    console.error("Login error:", error);
-    alert(error instanceof Error ? error.message : "Login failed");
+    setWelcomeName(email);
+  } catch (error: any) {
+    console.error("Login failed:", error.message);
+    throw error; // propagate to modal so it can show the error
   }
 };
+
 
 const handleSignup = async () => {
   try {
