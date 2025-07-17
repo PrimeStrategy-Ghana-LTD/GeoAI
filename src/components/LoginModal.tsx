@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { loginUser } from '@/utils/api'; // added import
+import { loginUser } from '@/utils/api';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -24,18 +24,34 @@ const LoginModal: React.FC<LoginModalProps> = ({
   setPassword,
   onSwitchToSignup
 }) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const result = await loginUser(email, password);
-      localStorage.setItem("token", result.token);
-      console.log("Login success:", result);
-      onLogin(); // call parent callback
-      onClose(); // close modal
-    } catch (error: any) {
-      alert("Login failed: " + error.message);
+  const [error, setError] = React.useState<string | null>(null);
+
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+
+  try {
+    const result = await loginUser(email, password);
+    console.log("Login result:", result); // ✅ Debug log
+
+    if (!result?.token) {
+      throw new Error("Login failed: No token received");
     }
-  };
+
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("searchCount", "0");
+    localStorage.setItem("userName", email);
+
+    onLogin();  // Notify parent
+    onClose();  // Close modal
+  } catch (error: any) {
+    console.error("Login error:", error);
+    const msg = error?.response?.data?.detail?.[0]?.msg || "Invalid email or password";
+    setError(msg);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -55,6 +71,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-400">Log in to continue your land search</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/50 text-red-300 rounded-md text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div>
@@ -110,7 +132,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Social login buttons (no change) */}
+          {/* Social login buttons */}
         </div>
 
         <div className="text-center text-sm text-gray-400">

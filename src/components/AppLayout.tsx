@@ -7,6 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import SearchChatsInterface from './SearchChatsInterface';
+import { loginUser, registerUser } from '../services/authService'; // relative path
+
+
+
+
 
 const AppLayout: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'chat'>('home');
@@ -66,10 +71,19 @@ const AppLayout: React.FC = () => {
     }
   };
 
-  const handleLogin = () => {
+ // Updated auth functions in AppLayout.tsx
+const handleLogin = async () => {
+  try {
+    const response = await loginUser(email, password);
+    
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('searchCount', '0');
-    localStorage.setItem('userName', email);
+    localStorage.setItem('userName', response.user?.name || email);
+    localStorage.setItem('token', response.token);
+    if (response.user?.id) {
+      localStorage.setItem('userId', response.user.id);
+    }
+    
     setIsLoggedIn(true);
     setSearchCount(0);
     setShowLoginModal(false);
@@ -77,12 +91,25 @@ const AppLayout: React.FC = () => {
     setPassword('');
     setCurrentView('chat');
     setActiveChat('1');
-  };
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    alert(error instanceof Error ? error.message : "Login failed");
+  }
+};
 
-  const handleSignup = () => {
+const handleSignup = async () => {
+  try {
+    const response = await registerUser(name, email, password);
+    
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('searchCount', '0');
-    localStorage.setItem('userName', name);
+    localStorage.setItem('userName', response.user?.name || name);
+    localStorage.setItem('token', response.token);
+    if (response.user?.id) {
+      localStorage.setItem('userId', response.user.id);
+    }
+    
     setIsLoggedIn(true);
     setSearchCount(0);
     setShowSignupModal(false);
@@ -91,19 +118,25 @@ const AppLayout: React.FC = () => {
     setPassword('');
     setCurrentView('chat');
     setActiveChat('1');
-  };
+    
+  } catch (error) {
+    console.error("Signup error:", error);
+    alert(error instanceof Error ? error.message : "Signup failed");
+  }
+};
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('searchCount');
-    localStorage.removeItem('userName');
-    setIsLoggedIn(false);
-    setSearchCount(0);
-    setShowAccountMenu(false);
-    setCurrentView('home');
-    navigate('/');
-  };
-
+const handleLogout = () => {
+  // Clear all auth-related storage
+  ['isLoggedIn', 'searchCount', 'userName', 'token', 'userId'].forEach(key => {
+    localStorage.removeItem(key);
+  });
+  
+  setIsLoggedIn(false);
+  setSearchCount(0);
+  setShowAccountMenu(false);
+  setCurrentView('home');
+  navigate('/');
+};
   return (
     <div className="min-h-screen bg-[#2b2c33] text-white">
       {currentView === 'home' && (
@@ -400,7 +433,7 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Login Modal */}
+      {/* Modals (Updated to use your new modal components) */}
       {showLoginModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
@@ -408,7 +441,7 @@ const AppLayout: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md"
+            className="bg-[#2b2c33] rounded-xl p-6 w-full max-w-md border border-gray-700 relative"
           >
             <LoginModal 
               onClose={() => setShowLoginModal(false)}
@@ -426,7 +459,6 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Signup Modal */}
       {showSignupModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
@@ -434,7 +466,7 @@ const AppLayout: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md"
+            className="bg-[#2b2c33] rounded-xl p-6 w-full max-w-md border border-gray-700 relative"
           >
             <SignupModal 
               onClose={() => setShowSignupModal(false)}
@@ -454,7 +486,7 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Search Popup */}
+      {/* Search Popup (Unchanged) */}
       {showSearchPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <SearchChatsInterface 
