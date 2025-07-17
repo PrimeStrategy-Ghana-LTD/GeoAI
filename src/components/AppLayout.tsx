@@ -7,9 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
 import SearchChatsInterface from './SearchChatsInterface';
-import { loginUser, registerUser } from '../services/authService'; // relative path
-
-
+import { loginUser } from '@/services/authService';
+import { signupUser } from '@/services/authService'; // absolute
 
 
 
@@ -100,7 +99,7 @@ const handleLogin = async () => {
 
 const handleSignup = async () => {
   try {
-    const response = await registerUser(name, email, password);
+    const response = await signupUser(name, email, password);
     
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('searchCount', '0');

@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { loginUser } from '@/utils/api';
+import { loginUser } from '@/services/authService';
+
 
 interface LoginModalProps {
   onClose: () => void;
@@ -45,11 +46,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
     onLogin();  // Notify parent
     onClose();  // Close modal
-  } catch (error: any) {
-    console.error("Login error:", error);
-    const msg = error?.response?.data?.detail?.[0]?.msg || "Invalid email or password";
-    setError(msg);
-  }
+  }catch (error: any) {
+  console.error("Login error:", error);
+  setError(error.message || "Login failed");
+}
+
 };
 
 
