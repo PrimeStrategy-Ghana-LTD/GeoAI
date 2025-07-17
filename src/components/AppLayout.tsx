@@ -67,38 +67,30 @@ const AppLayout: React.FC = () => {
   };
 
   const handleLogin = () => {
-    if (email === 'admin@gmail.com' && password === 'admin') {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('searchCount', '0');
-      localStorage.setItem('userName', 'Admin User');
-      setIsLoggedIn(true);
-      setSearchCount(0);
-      setShowLoginModal(false);
-      setEmail('');
-      setPassword('');
-      setCurrentView('chat');
-      setActiveChat('1');
-    } else {
-      alert('Invalid credentials. Use admin@gmail.com/admin for demo.');
-    }
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('searchCount', '0');
+    localStorage.setItem('userName', email);
+    setIsLoggedIn(true);
+    setSearchCount(0);
+    setShowLoginModal(false);
+    setEmail('');
+    setPassword('');
+    setCurrentView('chat');
+    setActiveChat('1');
   };
 
   const handleSignup = () => {
-    if (name && email && password) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('searchCount', '0');
-      localStorage.setItem('userName', name);
-      setIsLoggedIn(true);
-      setSearchCount(0);
-      setShowSignupModal(false);
-      setName('');
-      setEmail('');
-      setPassword('');
-      setCurrentView('chat');
-      setActiveChat('1');
-    } else {
-      alert('Please fill all fields');
-    }
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('searchCount', '0');
+    localStorage.setItem('userName', name);
+    setIsLoggedIn(true);
+    setSearchCount(0);
+    setShowSignupModal(false);
+    setName('');
+    setEmail('');
+    setPassword('');
+    setCurrentView('chat');
+    setActiveChat('1');
   };
 
   const handleLogout = () => {
@@ -116,6 +108,7 @@ const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-[#2b2c33] text-white">
       {currentView === 'home' && (
         <div className="relative p-4">
+          {/* Header section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
@@ -166,6 +159,7 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
 
+          {/* Beta tag */}
           <div className="flex justify-center mt-2">
             <div className="flex items-center gap-1 bg-white text-gray-900 px-3 py-1 rounded-full">
               <img src="/images/Vector-star.png" alt="Star Icon" className="w-3 h-3" />
@@ -173,6 +167,7 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
           
+          {/* Main content */}
           <div className="flex flex-col items-center justify-center p-8">
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
               Get all you need<br />about your desired land
@@ -190,35 +185,50 @@ const AppLayout: React.FC = () => {
             )}
             
             <div className="relative w-full max-w-md">
-  {/* Search Icon on the left */}
-  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-red-400" />
+              {/* Search Input Section */}
+              <div className="p-4 border-t border-gray-700">
+                <div className="relative max-w-2xl mx-auto">
+                  {/* Input Field */}
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="I'm looking for..."
+                    className="pl-12 pr-20 bg-[#3b3c44] text-white rounded-full border-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && inputValue.trim()) {
+                        handleSendMessage();
+                      }
+                    }}
+                    disabled={!isLoggedIn && searchCount >= 3}
+                  />
 
-  {/* Input Field */}
-  <Input
-    type="text"
-    placeholder="I'm looking for..."
-    className="pl-12 pr-12 py-2 bg-white text-gray-900 rounded-full border-0 focus:ring-2 focus:ring-cyan-400"
-    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-    disabled={!isLoggedIn && searchCount >= 3}
-  />
+                  {/* Star Icon */}
+                  <img
+                    src="/images/Vector-star.png"
+                    alt="Star"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 border border-white rounded-full p-0.5 z-10"
+                  />
 
-  {/* Microphone Icon (always visible) */}
-  <img
-    src="/images/microphone.png"
-    alt="Mic"
-    className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-opacity ${
-      !isLoggedIn && searchCount >= 3 ? 'opacity-40 cursor-not-allowed' : 'opacity-100 cursor-pointer'
-    }`}
-    onClick={() => {
-      if (!isLoggedIn && searchCount >= 3) {
-        setShowLoginModal(true);
-      } else {
-        // microphone functionality can be triggered here
-        console.log('Microphone clicked');
-      }
-    }}
-  />
-</div>
+                  {/* Microphone Icon */}
+                  <img
+                    src="/images/microphone.png"
+                    alt="Mic"
+                    className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-opacity ${
+                      !isLoggedIn && searchCount >= 3
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'opacity-100 cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      if (!isLoggedIn && searchCount >= 3) {
+                        setShowLoginModal(true);
+                      } else {
+                        console.log('Microphone clicked');
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
 
             <p className="text-gray-400 text-center mt-8 mb-4">You may ask</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -251,6 +261,7 @@ const AppLayout: React.FC = () => {
 
       {currentView === 'chat' && (
         <div className="flex h-screen">
+          {/* Sidebar */}
           <div className="w-64 bg-[#2b2c33] border-r border-gray-700 flex flex-col">
             <div className="p-4 border-b border-gray-700">
               <div className="flex items-center gap-2 text-white text-lg mb-4">
@@ -298,6 +309,7 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
 
+          {/* Chat area */}
           <div className="flex-1 flex flex-col bg-[#2b2c33]">
             <div className="flex justify-end p-4 relative">
               <div className="relative">
@@ -336,7 +348,7 @@ const AppLayout: React.FC = () => {
                 </div>
               </div>
 
-             <div className="bg-[#3b3c44] text-white rounded-xl p-4 w-full max-w-2xl">
+              <div className="bg-[#3b3c44] text-white rounded-xl p-4 w-full max-w-2xl">
                 <div className="flex items-start gap-2 mb-2">
                   <img src="/images/Vector-star.png" alt="AI" className="w-4 h-4 mt-0.5" />
                   <span className="text-sm">
@@ -372,30 +384,32 @@ const AppLayout: React.FC = () => {
                   className="pl-10 pr-10 bg-[#3b3c44] text-white rounded-full border-none"
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 /> 
-               <img
-  src="/images/Vector-star.png"
-  alt="star"
-  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 border border-white rounded-full p-0.5"
-/>
-<img
-  src="/images/microphone.png"
-  alt="mic"
-  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer border border-white rounded-full p-0.5"
-/>
-
-
+                <img
+                  src="/images/Vector-star.png"
+                  alt="star"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 border border-white rounded-full p-0.5"
+                />
+                <img
+                  src="/images/microphone.png"
+                  alt="mic"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer border border-white rounded-full p-0.5"
+                />
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Login Modal */}
       {showLoginModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
           onClick={() => setShowLoginModal(false)}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md"
+          >
             <LoginModal 
               onClose={() => setShowLoginModal(false)}
               onLogin={handleLogin}
@@ -412,12 +426,16 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
+      {/* Signup Modal */}
       {showSignupModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
           onClick={() => setShowSignupModal(false)}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md"
+          >
             <SignupModal 
               onClose={() => setShowSignupModal(false)}
               onSignup={handleSignup}
@@ -436,6 +454,7 @@ const AppLayout: React.FC = () => {
         </div>
       )}
 
+      {/* Search Popup */}
       {showSearchPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <SearchChatsInterface 
