@@ -1,85 +1,107 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://nomar.up.railway.app';
 
-export interface AuthResponse {
+interface AuthResponse {
   token: string;
   user?: {
     id: string;
     name: string;
     email: string;
-    // You can extend this with more fields if needed
   };
 }
 
-// 👤 Login User
-export async function loginUser(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+interface QueryResponse {
+  answer: string;
+  conversation_id: string;
+  processing_time?: number;
+}
 
-  if (!response.ok) {
-    let message = "Login failed";
+export class APIClient {
+  private sessionId: string;
+
+  constructor() {
+    this.sessionId = this.generateSessionId();
+  }
+
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  }
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    return this.fetchWrapper<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+  }
+
+  async register(userData: { 
+    name: string; 
+    email: string; 
+    password: string 
+  }): Promise<AuthResponse> {
+    return this.fetchWrapper<AuthResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...userData,
+        organization: "Land AI",
+        location: "Ghana"
+      })
+    });
+  }
+
+  async query(
+    question: string, 
+    options: { conversationId?: string } = {}
+  ): Promise<QueryResponse> {
+    return this.fetchWrapper<QueryResponse>('/query', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: question,
+        conversation_id: options.conversationId || this.sessionId
+      })
+    });
+  }
+
+  private async fetchWrapper<T>(
+    endpoint: string, 
+    options: RequestInit
+  ): Promise<T> {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      const error = await this.parseError(response);
+      throw error;
+    }
+
+    return response.json();
+  }
+
+  private async parseError(response: Response): Promise<Error> {
     try {
       const errorData = await response.json();
-      message = errorData?.detail || message;
+      return new Error(
+        errorData.detail || 
+        errorData.message || 
+        `Request failed (${response.status})`
+      );
     } catch {
-      message = await response.text();
+      return new Error(response.statusText);
     }
-    throw new Error(message);
   }
-
-  const result: AuthResponse = await response.json();
-
-  if (!result.token) {
-    throw new Error("No token received from server.");
-  }
-
-  return result;
 }
 
-// 📝 Register User
-export async function registerUser(
-  name: string,
-  email: string,
-  password: string
-): Promise<AuthResponse> {
-  const response = await fetch(`${BASE_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name,
-      email,
-      password,
-      organization: "Land AI", // optional: make dynamic later
-      location: "Ghana",        // optional: use location API later
-    }),
-  });
-
-  if (!response.ok) {
-    let message = "Signup failed";
-    try {
-      const contentType = response.headers.get("Content-Type");
-      if (contentType?.includes("application/json")) {
-        const errorData = await response.json();
-        message = errorData?.detail || JSON.stringify(errorData);
-      } else {
-        message = await response.text();
-      }
-    } catch {
-      message = "Unknown server error";
-    }
-
-    throw new Error(message);
-  }
-
-  const result: AuthResponse = await response.json();
-
-  if (!result.token) {
-    throw new Error("No token received after registration.");
-  }
-
-  return result;
-}
+// Default export instance
+const api = new APIClient();
+export default api;
