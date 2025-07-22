@@ -9,13 +9,13 @@ interface AuthResponse {
   };
 }
 
-// ✅ Original login function (enhanced with types)
+// ✅ LOGIN: Sends correct credentials
 export async function loginUser(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
-      username: email, // Kept original FastAPI compatibility
+      username: email, // FastAPI uses "username" for OAuth2 login
       password 
     }),
   });
@@ -32,15 +32,15 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
   return data;
 }
 
-// ✅ Original signup function (with improved error parsing)
-export async function signupUser(email: string, password: string, fullName: string): Promise<AuthResponse> {
+// ✅ SIGNUP: Sends name as full_name (as required by backend)
+export async function signupUser(email: string, password: string, name: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email,
       password,
-      full_name: fullName, // Kept original field name
+      full_name: name // 🔥 This is the correct key expected by your backend
     }),
   });
 
@@ -48,7 +48,7 @@ export async function signupUser(email: string, password: string, fullName: stri
 
   if (!res.ok) {
     const message = Array.isArray(data.detail)
-      ? data.detail[0]?.msg || data.detail // Prioritize first error
+      ? data.detail[0]?.msg || data.detail
       : data.detail;
     throw new Error(message || 'Signup failed');
   }
@@ -56,7 +56,7 @@ export async function signupUser(email: string, password: string, fullName: stri
   return data;
 }
 
-// 🆕 Silent session validation (new addition)
+// ✅ TOKEN VALIDATION: Verifies user session token
 export async function validateToken(token: string): Promise<boolean> {
   try {
     const res = await fetch(`${BASE_URL}/auth/validate`, {
