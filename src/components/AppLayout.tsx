@@ -3,7 +3,18 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Search, LogOut, PenIcon, User, LayoutDashboard, FileText, BarChart2, Settings, HelpCircle } from 'lucide-react';
+import { 
+  Search, 
+  LogOut, 
+  PenIcon, 
+  User, 
+  LayoutDashboard, 
+  FileText, 
+  BarChart2, 
+  Settings, 
+  HelpCircle,
+  ChevronDown
+} from 'lucide-react';
 import { loginUser, signupUser } from '@/services/authService';
 import LoginModal from '@/components/LoginModal';
 import SignupModal from './SignupModal';
@@ -155,6 +166,60 @@ const AppLayout: React.FC = () => {
     }
   };
 
+  const renderAuthSection = () => (
+    <div className="flex items-center gap-3">
+      {isLoggedIn ? (
+        <div className="flex items-center gap-2 relative">
+          <button
+            onClick={() => setShowAccountMenu(!showAccountMenu)}
+            className="flex items-center gap-2 group"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+              <User className="w-4 h-4" />
+            </div>
+            <ChevronDown 
+              className={`w-4 h-4 text-gray-400 transition-transform ${
+                showAccountMenu ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showAccountMenu && (
+            <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 w-48 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-700">
+                <p className="text-sm font-medium truncate">{welcomeName}</p>
+                <p className="text-xs text-gray-400">Free Plan</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-700 text-red-400"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="px-4 py-1.5 text-sm font-medium rounded-md border border-gray-600 hover:bg-gray-700 transition-colors"
+          >
+            Log in
+          </button>
+          <button
+            onClick={() => setShowSignupModal(true)}
+            className="px-4 py-1.5 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 transition-colors"
+          >
+            Sign up
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#2b2c33] text-white flex">
       {/* Sidebar - Only shown in chat view */}
@@ -201,34 +266,7 @@ const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-auto pt-4 border-t border-gray-700">
-            {isLoggedIn ? (
-              <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{welcomeName}</p>
-                  <p className="text-xs text-gray-400 truncate">Free Plan</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Button
-                  onClick={() => setShowLoginModal(true)}
-                  className="w-full bg-gray-700 hover:bg-gray-600"
-                >
-                  Log In
-                </Button>
-                <Button
-                  onClick={() => setShowSignupModal(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-500"
-                >
-                  Sign Up
-                </Button>
-              </div>
-            )}
-          </div>
+          <div className="mt-auto"></div>
         </div>
       )}
 
@@ -239,174 +277,106 @@ const AppLayout: React.FC = () => {
           <button onClick={() => handleNavigation('dashboard')}>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-              <span className="text-gray-300">Land-Ai</span>
+              <span className="text-gray-300">NomaRoot</span>
             </div>
           </button>
-          <div className="flex items-center gap-4">
-            {isLoggedIn ? (
-              <div className="relative">
-                <button 
-                  onClick={() => setShowAccountMenu(!showAccountMenu)}
-                  className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
-                >
-                  <User className="w-4 h-4" />
-                </button>
-                {showAccountMenu && (
-                  <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 w-48">
-                    <div className="p-2 border-b border-gray-700 text-sm text-white">
-                      {welcomeName || 'Account'}
-                    </div>
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-700 text-red-400 flex items-center gap-2 text-sm"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <button 
-                  onClick={() => setShowLoginModal(true)}
-                  className="text-gray-300 hover:text-white font-medium text-sm"
-                >
-                  Log in
-                </button>
-                <button 
-                  onClick={() => setShowSignupModal(true)}
-                  className="text-blue-400 hover:text-blue-300 font-medium text-sm"
-                >
-                  Sign up
-                </button>
-              </>
-            )}
-          </div>
+          {renderAuthSection()}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-         {currentView === 'home' && (
-  <div className="p-4 md:p-8 flex flex-col min-h-screen">
-    {/* Top Header */}
-    <header className="flex justify-between items-center mb-8">
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-        <span className="text-gray-300 text-lg font-medium">Land-Ai</span>
-      </div>
-      <div className="flex items-center gap-4">
-        {isLoggedIn ? (
-          <div className="relative">
-            <button 
-              onClick={() => setShowAccountMenu(!showAccountMenu)}
-              className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
-            >
-              <User className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <button 
-              onClick={() => setShowLoginModal(true)}
-              className="text-gray-300 hover:text-white font-medium text-sm"
-            >
-              Log in
-            </button>
-            <button 
-              onClick={() => setShowSignupModal(true)}
-              className="text-blue-400 hover:text-blue-300 font-medium text-sm"
-            >
-              Sign up
-            </button>
-          </>
-        )}
-      </div>
-    </header>
+          {currentView === 'home' ? (
+            <div className="p-4 md:p-8 flex flex-col min-h-screen">
+              {/* Desktop Header */}
+              <header className="hidden md:flex justify-between items-center mb-8">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+                  <span className="text-gray-300 text-lg font-medium">NomaRoot</span>
+                </div>
+                {renderAuthSection()}
+              </header>
 
-    {/* Main Content - Centered */}
-    <div className="flex flex-col items-center justify-center flex-1">
-      {/* Gradient Text Heading */}
-       <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
-              Get all you need<br />about your desired land
-            </h1>
-      
-      {/* Subheading */}
-      <p className="text-gray-400 text-lg mb-6 text-center">How can I help you today?</p>
-      
-      {/* Search Counter */}
-      {!isLoggedIn && (
-        <div className="text-center text-sm text-gray-400 mb-6">
-          {searchCount < 3 ? (
-            <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
-          ) : (
-            <p className="text-red-400">Please login to continue searching</p>
-          )}
-        </div>
-      )}
+              {/* Main Content - Centered */}
+              <div className="flex flex-col items-center justify-center flex-1">
+                {/* Gradient Text Heading */}
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
+                  Get all you need<br />about your desired land
+                </h1>
+                
+                {/* Subheading */}
+                <p className="text-gray-400 text-lg mb-6 text-center">How can I help you today?</p>
+                
+                {/* Search Counter */}
+                {!isLoggedIn && (
+                  <div className="text-center text-sm text-gray-400 mb-6">
+                    {searchCount < 3 ? (
+                      <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
+                    ) : (
+                      <p className="text-red-400">Please login to continue searching</p>
+                    )}
+                  </div>
+                )}
 
-      {/* Search Input */}
-      <div className="relative w-full max-w-md mb-8">
-        <div className="relative">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="I'm looking for..."
-            className="pl-12 pr-20 bg-[#3b3c44] text-white rounded-full border-none h-12"
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            disabled={!isLoggedIn && searchCount >= 3}
-          />
-          <img
-            src="/images/Vector-star.png"
-            alt="Star"
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4"
-          />
-          <img
-            src="/images/microphone.png"
-            alt="Mic"
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-              !isLoggedIn && searchCount >= 3 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-            }`}
-          />
-        </div>
-      </div>
+                {/* Search Input */}
+                <div className="relative w-full max-w-md mb-8">
+                  <div className="relative">
+                    <Input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="I'm looking for..."
+                      className="pl-12 pr-20 bg-[#3b3c44] text-white rounded-full border-none h-12"
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      disabled={!isLoggedIn && searchCount >= 3}
+                    />
+                    <img
+                      src="/images/Vector-star.png"
+                      alt="Star"
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                    />
+                    <img
+                      src="/images/microphone.png"
+                      alt="Mic"
+                      className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                        !isLoggedIn && searchCount >= 3 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                      }`}
+                    />
+                  </div>
+                </div>
 
-      {/* Suggestions Heading */}
-      <p className="text-gray-400 text-center mt-8 mb-4">You may ask</p>
-      
-      {/* Suggestions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-        {suggestions.map((s) => (
-          <div
-            key={s.id}
-            className="p-4 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
-            onClick={() => {
-              if (!isLoggedIn && searchCount >= 3) {
-                setShowLoginModal(true);
-              } else {
-                setCurrentView('chat');
-                setActiveChat(s.id);
-                if (!isLoggedIn) {
-                  const newCount = searchCount + 1;
-                  setSearchCount(newCount);
-                  localStorage.setItem('searchCount', newCount.toString());
-                }
-              }
-            }}
-          >
-            <h3 className="text-sm font-medium text-white mb-2">{s.title}</h3>
-            <div className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300">
-              <span>Ask this</span>
-              <span className="text-sm">→</span>
+                {/* Suggestions Heading */}
+                <p className="text-gray-400 text-center mt-8 mb-4">You may ask</p>
+                
+                {/* Suggestions Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+                  {suggestions.map((s) => (
+                    <div
+                      key={s.id}
+                      className="p-4 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
+                      onClick={() => {
+                        if (!isLoggedIn && searchCount >= 3) {
+                          setShowLoginModal(true);
+                        } else {
+                          setCurrentView('chat');
+                          setActiveChat(s.id);
+                          if (!isLoggedIn) {
+                            const newCount = searchCount + 1;
+                            setSearchCount(newCount);
+                            localStorage.setItem('searchCount', newCount.toString());
+                          }
+                        }
+                      }}
+                    >
+                      <h3 className="text-sm font-medium text-white mb-2">{s.title}</h3>
+                      <div className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300">
+                        <span>Ask this</span>
+                        <span className="text-sm">→</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
-
-          {currentView === 'chat' && (
+          ) : (
             <div className="flex flex-col h-full">
               {/* Chat header */}
               <div className="flex justify-between items-center p-4 border-b border-gray-700">
@@ -424,28 +394,7 @@ const AppLayout: React.FC = () => {
                     {activePage === 'dashboard' ? 'Chat' : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
                   </h2>
                 </div>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowAccountMenu(!showAccountMenu)}
-                    className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
-                  >
-                    <User className="w-4 h-4" />
-                  </button>
-                  {showAccountMenu && (
-                    <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 w-48">
-                      <div className="p-2 border-b border-gray-700 text-sm text-white">
-                        {welcomeName || 'Account'}
-                      </div>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-700 text-red-400 flex items-center gap-2 text-sm"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {renderAuthSection()}
               </div>
 
               {/* Chat content */}
@@ -569,7 +518,7 @@ const AppLayout: React.FC = () => {
               setPassword={setPassword}
               onSwitchToSignup={() => {
                 setShowLoginModal(false);
-                setShowLoginModal(true);
+                setShowSignupModal(true);
               }}
             />
           </div>
