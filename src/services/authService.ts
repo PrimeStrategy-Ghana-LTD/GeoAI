@@ -34,7 +34,7 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
 
 // ✅ SIGNUP: Sends name as full_name (as required by backend)
 export async function signupUser(email: string, password: string, name: string): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/auth/signup`, {
+ const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
