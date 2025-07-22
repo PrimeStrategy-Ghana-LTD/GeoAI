@@ -33,23 +33,23 @@ export class APIClient {
     });
   }
 
-  async register(userData: { 
-    name: string; 
-    email: string; 
-    password: string 
+  async register(userData: {
+    name: string;
+    email: string;
+    password: string;
   }): Promise<AuthResponse> {
     return this.fetchWrapper<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({
         ...userData,
-        organization: "Land AI",
-        location: "Ghana"
+        organization: 'Land AI',
+        location: 'Ghana'
       })
     });
   }
 
   async query(
-    question: string, 
+    question: string,
     options: { conversationId?: string } = {}
   ): Promise<QueryResponse> {
     return this.fetchWrapper<QueryResponse>('/query', {
@@ -62,18 +62,22 @@ export class APIClient {
   }
 
   private async fetchWrapper<T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit
   ): Promise<T> {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
+    const defaultHeaders: Record<string, string> = {
+      'Content-Type': 'application/json'
     };
 
     const token = localStorage.getItem('token');
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
+
+    const headers: Record<string, string> = {
+      ...defaultHeaders,
+      ...(options.headers as Record<string, string> || {})
+    };
 
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
@@ -92,8 +96,8 @@ export class APIClient {
     try {
       const errorData = await response.json();
       return new Error(
-        errorData.detail || 
-        errorData.message || 
+        errorData.detail ||
+        errorData.message ||
         `Request failed (${response.status})`
       );
     } catch {
@@ -102,6 +106,5 @@ export class APIClient {
   }
 }
 
-// Default export instance
 const api = new APIClient();
 export default api;

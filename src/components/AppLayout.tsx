@@ -1,26 +1,239 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { 
-  Search, 
-  LogOut, 
-  PenIcon, 
-  User, 
-  LayoutDashboard, 
-  FileText, 
-  BarChart2, 
-  Settings, 
-  HelpCircle,
-  ChevronDown
+  Search, LogOut, PenIcon, User, LayoutDashboard, 
+  FileText, BarChart2, Settings, HelpCircle,
+  ChevronDown, BookOpen, Mic, ArrowRight,
+  SearchCheck
 } from 'lucide-react';
-import { loginUser, signupUser } from '@/services/authService';
-import LoginModal from '@/components/LoginModal';
-import SignupModal from './SignupModal';
 import SearchChatsInterface from './SearchChatsInterface';
 
 type ActivePage = 'dashboard' | 'reports' | 'analytics' | 'settings' | 'help';
+
+// Updated auth service functions
+const loginUser = async (email: string, password: string) => {
+  const response = await fetch('https://nomar.up.railway.app/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Login failed');
+  }
+
+  return response.json();
+};
+
+const signupUser = async (email: string, password: string, name: string) => {
+  // Validate password requirements
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    throw new Error('Password must be at least 8 characters with uppercase, lowercase, and a number');
+  }
+
+  const response = await fetch('https://nomar.up.railway.app/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      name
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Signup failed');
+  }
+
+  return response.json();
+};
+
+// Updated LoginModal component
+const LoginModal = ({ 
+  onClose, 
+  onLogin, 
+  email, 
+  setEmail, 
+  password, 
+  setPassword, 
+  onSwitchToSignup 
+}: {
+  onClose: () => void;
+  onLogin: (credentials: { email: string; password: string }) => Promise<void>;
+  email: string;
+  setEmail: (email: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  onSwitchToSignup: () => void;
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    try {
+      await onLogin({ email, password });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Log In</h2>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 bg-[#3b3c44] rounded border border-gray-600"
+            placeholder="email@example.com"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 bg-[#3b3c44] rounded border border-gray-600"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+        <div className="flex justify-between pt-4">
+          <button
+            type="button"
+            onClick={onSwitchToSignup}
+            className="text-sm text-blue-400 hover:text-blue-300"
+          >
+            Don't have an account? Sign up
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md disabled:opacity-50"
+          >
+            {isLoading ? 'Logging in...' : 'Log In'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Updated SignupModal component
+const SignupModal = ({ 
+  onClose, 
+  onSignup, 
+  initialValues, 
+  onSwitchToLogin 
+}: {
+  onClose: () => void;
+  onSignup: (data: { email: string; password: string; name: string }) => Promise<void>;
+  initialValues: { email: string; password: string; name: string };
+  onSwitchToLogin: () => void;
+}) => {
+  const [email, setEmail] = useState(initialValues.email);
+  const [password, setPassword] = useState(initialValues.password);
+  const [name, setName] = useState(initialValues.name);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    try {
+      await onSignup({ email, password, name });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Signup failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Create Account</h2>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Full Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 bg-[#3b3c44] rounded border border-gray-600"
+            placeholder="Your name"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 bg-[#3b3c44] rounded border border-gray-600"
+            placeholder="email@example.com"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 bg-[#3b3c44] rounded border border-gray-600"
+            placeholder="••••••••"
+            required
+          />
+          <p className="text-xs text-gray-400">
+            Password must be at least 8 characters with uppercase, lowercase, and a number
+          </p>
+        </div>
+        <div className="flex justify-between pt-4">
+          <button
+            type="button"
+            onClick={onSwitchToLogin}
+            className="text-sm text-blue-400 hover:text-blue-300"
+          >
+            Already have an account? Log in
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md disabled:opacity-50"
+          >
+            {isLoading ? 'Creating account...' : 'Sign Up'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const AppLayout: React.FC = () => {
   // View state
@@ -81,6 +294,29 @@ const AppLayout: React.FC = () => {
   }, []);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
+    // Demo account (remove before production)
+    const demoAccount = {
+      email: "demo@nomaroot.com",
+      password: "demo123",
+      name: "Demo User",
+      id: "demo-user-123"
+    };
+
+    // Check demo credentials first
+    if (credentials.email === demoAccount.email && credentials.password === demoAccount.password) {
+      localStorage.setItem('token', 'demo-token-123');
+      localStorage.setItem('userName', demoAccount.name);
+      localStorage.setItem('userId', demoAccount.id);
+      localStorage.setItem('isLoggedIn', 'true');
+      
+      setIsLoggedIn(true);
+      setShowLoginModal(false);
+      setCurrentView('chat');
+      setWelcomeName(demoAccount.name);
+      return;
+    }
+
+    // Original login logic for real accounts
     try {
       const { access_token: token, user } = await loginUser(credentials.email, credentials.password);
       
@@ -94,6 +330,7 @@ const AppLayout: React.FC = () => {
       setEmail('');
       setPassword('');
       setCurrentView('chat');
+      setWelcomeName(user?.name || credentials.email);
       
     } catch (error) {
       console.error("Login error:", error);
@@ -120,10 +357,11 @@ const AppLayout: React.FC = () => {
       setEmail('');
       setPassword('');
       setCurrentView('chat');
+      setWelcomeName(user?.name || signupData.name);
       
     } catch (error) {
       console.error("Signup error:", error);
-      alert(error instanceof Error ? error.message : "Signup failed");
+      alert(error instanceof Error ? error.message : "Signup failed. Password must be at least 8 characters with uppercase, lowercase, and a number");
     }
   };
 
@@ -166,42 +404,9 @@ const AppLayout: React.FC = () => {
     }
   };
 
-  const renderAuthSection = () => (
+  const renderLandingAuthSection = () => (
     <div className="flex items-center gap-3">
-      {isLoggedIn ? (
-        <div className="flex items-center gap-2 relative">
-          <button
-            onClick={() => setShowAccountMenu(!showAccountMenu)}
-            className="flex items-center gap-2 group"
-          >
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-              <User className="w-4 h-4" />
-            </div>
-            <ChevronDown 
-              className={`w-4 h-4 text-gray-400 transition-transform ${
-                showAccountMenu ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {/* Dropdown Menu */}
-          {showAccountMenu && (
-            <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 w-48 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-700">
-                <p className="text-sm font-medium truncate">{welcomeName}</p>
-                <p className="text-xs text-gray-400">Free Plan</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-700 text-red-400"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
+      {!isLoggedIn && (
         <>
           <button
             onClick={() => setShowLoginModal(true)}
@@ -220,14 +425,48 @@ const AppLayout: React.FC = () => {
     </div>
   );
 
+  const renderChatAuthSection = () => (
+    <div className="flex items-center gap-2 relative">
+      <button
+        onClick={() => setShowAccountMenu(!showAccountMenu)}
+        className="flex items-center gap-2 group"
+      >
+        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+          <User className="w-4 h-4" />
+        </div>
+        <ChevronDown 
+          className={`w-4 h-4 text-gray-400 transition-transform ${
+            showAccountMenu ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {showAccountMenu && (
+        <div className="absolute right-0 top-10 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50 w-48 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-700">
+            <p className="text-sm font-medium truncate">{welcomeName}</p>
+            <p className="text-xs text-gray-400">Free Plan</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-700 text-red-400"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#2b2c33] text-white flex">
+    <div className="min-h-screen bg-[#1e1f24] text-white flex">
       {/* Sidebar - Only shown in chat view */}
       {currentView === 'chat' && (
-        <div className="w-64 bg-gray-800 border-r border-gray-700 p-4 flex flex-col hidden md:flex">
+        <div className="w-64 bg-[#1e1f24] border-r border-gray-700 p-4 flex flex-col hidden md:flex">
           <div className="flex items-center gap-2 mb-8">
-            <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-            <span className="text-gray-300 text-lg">Land-Ai</span>
+            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+            <span className="text-gray-300 text-lg font-medium">NomaRoot</span>
           </div>
 
           <nav className="flex-1 space-y-1">
@@ -235,8 +474,10 @@ const AppLayout: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleNavigation(item.id as ActivePage)}
-                className={`w-full text-left px-4 py-2 rounded-md flex items-center gap-3 ${
-                  activePage === item.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+                className={`w-full text-left px-4 py-3 rounded-md flex items-center gap-3 transition-colors ${
+                  activePage === item.id 
+                    ? 'bg-blue-900/30 text-white border border-blue-500/30' 
+                    : 'text-gray-300 hover:bg-gray-700'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -254,61 +495,93 @@ const AppLayout: React.FC = () => {
               {chats.map((chat) => (
                 <div
                   key={chat.id}
-                  className={`p-2 rounded cursor-pointer text-sm ${
-                    activeChat === chat.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                    activeChat === chat.id 
+                      ? 'bg-blue-900/20 border border-blue-500/30' 
+                      : 'bg-gray-800/50 hover:bg-gray-700'
                   }`}
                   onClick={() => setActiveChat(chat.id)}
                 >
-                  <div className="font-medium truncate">{chat.title}</div>
-                  <div className="text-xs truncate">{chat.lastMessage}</div>
+                  <div className="font-medium text-white truncate">{chat.title}</div>
+                  <div className="text-xs text-gray-400 truncate">{chat.lastMessage}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-auto"></div>
+          <div className="mt-auto pt-4 border-t border-gray-700">
+            <button className="w-full text-left px-4 py-3 rounded-md flex items-center gap-3 text-gray-300 hover:bg-gray-700 transition-colors">
+              <BookOpen className="w-5 h-5" />
+              <span>Terms & Conditions</span>
+            </button>
+          </div>
         </div>
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col overflow-hidden ${currentView === 'chat' ? 'md:ml-64' : ''}`}>
+      <div className={`flex-1 flex flex-col ${currentView === 'chat' ? 'md:ml-64' : ''}`}>
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-700">
           <button onClick={() => handleNavigation('dashboard')}>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-              <span className="text-gray-300">NomaRoot</span>
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <span className="text-gray-300 font-medium">NomaRoot</span>
             </div>
           </button>
-          {renderAuthSection()}
+          {currentView === 'home' ? renderLandingAuthSection() : renderChatAuthSection()}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
           {currentView === 'home' ? (
-            <div className="p-4 md:p-8 flex flex-col min-h-screen">
+            <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
               {/* Desktop Header */}
-              <header className="hidden md:flex justify-between items-center mb-8">
+              <header className="hidden md:flex justify-between items-center mb-8 w-full max-w-6xl">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+                  <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
                   <span className="text-gray-300 text-lg font-medium">NomaRoot</span>
                 </div>
-                {renderAuthSection()}
+                {renderLandingAuthSection()}
               </header>
 
               {/* Main Content - Centered */}
-              <div className="flex flex-col items-center justify-center flex-1">
-                {/* Gradient Text Heading */}
+              <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
-                  Get all you need<br />about your desired land
-                </h1>
+              Get all you need<br />about your desired land
+            </h1>
+
                 
-                {/* Subheading */}
-                <p className="text-gray-400 text-lg mb-6 text-center">How can I help you today?</p>
-                
-                {/* Search Counter */}
+                <p className="text-gray-300 text-lg mb-8 text-center">
+                  How can I help you today?
+                </p>
+
+                <div className="relative w-full max-w-md mb-8">
+                  <div className="relative">
+                    <input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="I'm looking for..."
+                      className="w-full pl-12 pr-12 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      disabled={!isLoggedIn && searchCount >= 3}
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                      <img
+                        src="/images/Vector-star.png"
+                        alt="Star"
+                        className="w-4 h-4"
+                      />
+                    </div>
+                    <button className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <Mic className={`w-4 h-4 ${
+                        !isLoggedIn && searchCount >= 3 ? 'text-gray-500' : 'text-blue-400 hover:text-blue-300'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+
                 {!isLoggedIn && (
-                  <div className="text-center text-sm text-gray-400 mb-6">
+                  <div className="text-center text-sm text-gray-400 mb-8">
                     {searchCount < 3 ? (
                       <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
                     ) : (
@@ -317,104 +590,66 @@ const AppLayout: React.FC = () => {
                   </div>
                 )}
 
-                {/* Search Input */}
-                <div className="relative w-full max-w-md mb-8">
-                  <div className="relative">
-                    <Input
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="I'm looking for..."
-                      className="pl-12 pr-20 bg-[#3b3c44] text-white rounded-full border-none h-12"
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      disabled={!isLoggedIn && searchCount >= 3}
-                    />
-                    <img
-                      src="/images/Vector-star.png"
-                      alt="Star"
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    />
-                    <img
-                      src="/images/microphone.png"
-                      alt="Mic"
-                      className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                        !isLoggedIn && searchCount >= 3 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* Suggestions Heading */}
-                <p className="text-gray-400 text-center mt-8 mb-4">You may ask</p>
-                
-                {/* Suggestions Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-                  {suggestions.map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-4 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
-                      onClick={() => {
-                        if (!isLoggedIn && searchCount >= 3) {
-                          setShowLoginModal(true);
-                        } else {
-                          setCurrentView('chat');
-                          setActiveChat(s.id);
-                          if (!isLoggedIn) {
-                            const newCount = searchCount + 1;
-                            setSearchCount(newCount);
-                            localStorage.setItem('searchCount', newCount.toString());
+                <div className="w-full max-w-2xl">
+                  <p className="text-gray-400 text-center mb-6 uppercase text-sm tracking-wider">
+                    You may ask
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {suggestions.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-4 bg-[#2b2c33] border border-gray-700 rounded-lg hover:border-blue-500 transition-all cursor-pointer group"
+                        onClick={() => {
+                          if (!isLoggedIn && searchCount >= 3) {
+                            setShowLoginModal(true);
+                          } else {
+                            setCurrentView('chat');
+                            setActiveChat(s.id);
+                            if (!isLoggedIn) {
+                              const newCount = searchCount + 1;
+                              setSearchCount(newCount);
+                              localStorage.setItem('searchCount', newCount.toString());
+                            }
                           }
-                        }
-                      }}
-                    >
-                      <h3 className="text-sm font-medium text-white mb-2">{s.title}</h3>
-                      <div className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300">
-                        <span>Ask this</span>
-                        <span className="text-sm">→</span>
+                        }}
+                      >
+                        <h3 className="text-sm font-medium text-white mb-2 group-hover:text-blue-400 transition-colors">
+                          {s.title}
+                        </h3>
+                        <div className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                          <span>Ask this</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex flex-col h-full">
-              {/* Chat header */}
-              <div className="flex justify-between items-center p-4 border-b border-gray-700">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="md:hidden text-gray-300"
-                    onClick={() => setCurrentView('home')}
-                  >
-                    <PenIcon className="w-4 h-4 mr-2" />
-                    New Chat
-                  </Button>
-                  <h2 className="text-lg font-medium">
-                    {activePage === 'dashboard' ? 'Chat' : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
-                  </h2>
-                </div>
-                {renderAuthSection()}
+              {/* Chat header - Cleaned up (no border, no "Chat" text) */}
+              <div className="flex justify-end items-center p-4">
+                {renderChatAuthSection()}
               </div>
 
               {/* Chat content */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto">
                 {activePage === 'dashboard' ? (
-                  <div className="max-w-3xl mx-auto">
-                    {/* Sample chat message */}
-                    <div className="flex items-start gap-3 mb-6">
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#3b3c44] flex items-center justify-center mt-1">
                         <img src="/images/lightning-icon.png" alt="User" className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
-                        <div className="bg-[#3b3c44] text-white rounded-xl p-4 mb-2">
+                        <div className="bg-[#3b3c44] text-white rounded-xl p-4">
                           <span className="text-sm">Recommend litigation free land for my gym project</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* AI response */}
-                    <div className="flex items-start gap-3 mb-6">
+                    <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#3b3c44] flex items-center justify-center mt-1">
                         <img src="/images/Vector-star.png" alt="AI" className="w-4 h-4" />
                       </div>
@@ -452,16 +687,15 @@ const AppLayout: React.FC = () => {
                       {activePage.charAt(0).toUpperCase() + activePage.slice(1)} Content
                     </h2>
                     <p className="text-gray-300">
-                      This is where your {activePage} content will be displayed. Connect to Grok API to show relevant data.
+                      This is where your {activePage} content will be displayed.
                     </p>
-                    {/* Placeholder for Grok Report content */}
                     <div className="mt-6 bg-[#3b3c44] rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <img src="/images/Vector-star.png" alt="Grok" className="w-4 h-4" />
                         <span className="font-medium">Sample {activePage} Data</span>
                       </div>
                       <p className="text-sm text-gray-300">
-                        Connect to Grok API to fetch real {activePage} data and display it here.
+                        Connect to API to fetch real {activePage} data and display it here.
                       </p>
                     </div>
                   </div>
@@ -469,25 +703,25 @@ const AppLayout: React.FC = () => {
               </div>
 
               {/* Input area */}
-              <div className="p-4 border-t border-gray-700">
+              <div className="p-4">
                 <div className="relative max-w-3xl mx-auto">
                   <Input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={activePage === 'dashboard' ? "I'm looking for..." : `Ask about ${activePage}...`}
-                    className="pl-10 pr-10 bg-[#3b3c44] text-white rounded-full border-none"
+                    className="pl-10 pr-10 bg-[#3b3c44] text-white rounded-full border-none focus:ring-2 focus:ring-blue-500"
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   />
-                  <img
-                    src="/images/Vector-star.png"
-                    alt="star"
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 border border-white rounded-full p-0.5"
-                  />
-                  <img
-                    src="/images/microphone.png"
-                    alt="mic"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 cursor-pointer border border-white rounded-full p-0.5"
-                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <img
+                      src="/images/Vector-star.png"
+                      alt="star"
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Mic className="w-4 h-4 text-blue-400 hover:text-blue-300" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -538,9 +772,9 @@ const AppLayout: React.FC = () => {
               onClose={() => setShowSignupModal(false)}
               onSignup={handleSignup}
               initialValues={{
-                name,
                 email,
-                password
+                password,
+                name
               }}
               onSwitchToLogin={() => {
                 setShowSignupModal(false);
