@@ -1,68 +1,99 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import {
+  Plus,
+  Search,
+  MessageSquare,
+  ChevronRight,
+  Star,
+  History
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, MessageSquare, ChevronRight, Star, History } from 'lucide-react';
+import { conversationManager } from '@/lib/ConversationManager';
 
 interface SidebarProps {
   onNewChat: () => void;
   onSearchChats: () => void;
-  onChatSelect: (chat: string) => void;
+  onChatSelect: (chatId: string) => void;
   activeChat?: string | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  onNewChat, 
-  onSearchChats, 
+const Sidebar: React.FC<SidebarProps> = ({
+  onNewChat,
+  onSearchChats,
   onChatSelect,
-  activeChat 
+  activeChat
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [chats, setChats] = useState<
+    { id: string; title: string; isPinned: boolean; lastActive: string }[]
+  >([]);
 
-  const chats = [
-    { id: '1', title: "Gym Project", isPinned: true, lastActive: "2h ago" },
-    { id: '2', title: "Best area for story building", isPinned: false, lastActive: "1d ago" },
-    { id: '3', title: "Ramsa site investigation", isPinned: true, lastActive: "3d ago" },
-    { id: '4', title: "Water business locations", isPinned: false, lastActive: "1w ago" },
-  ];
+  useEffect(() => {
+    const loadChats = () => {
+      const conversations = conversationManager.getConversations();
+      const mapped = conversations.map((c) => ({
+        id: c.id,
+        title: c.title || 'Untitled',
+        isPinned: false,
+        lastActive: c.lastActive.toISOString()
+      }));
+      setChats(mapped);
+    };
 
-  const filteredChats = chats.filter(chat => 
+    loadChats();
+    window.addEventListener('chatListUpdated', loadChats);
+    return () => window.removeEventListener('chatListUpdated', loadChats);
+  }, []);
+
+  const filteredChats = chats.filter((chat) =>
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const pinnedChats = filteredChats.filter(chat => chat.isPinned);
-  const unpinnedChats = filteredChats.filter(chat => !chat.isPinned);
+  const pinnedChats = filteredChats.filter((chat) => chat.isPinned);
+  const unpinnedChats = filteredChats.filter((chat) => !chat.isPinned);
 
   return (
-    <div className={`h-full bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+    <div
+      className={`h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
       {/* Collapse Button */}
-      <button 
+      <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-1/2 z-10 bg-gray-700 rounded-full p-1 border border-gray-600 hover:bg-gray-600 transition-all"
+        className="absolute -right-3 top-1/2 z-10 bg-gray-700 rounded-full p-1 border border-gray-600 hover:bg-gray-600"
       >
-        <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+        <ChevronRight
+          className={`w-4 h-4 text-gray-300 transition-transform ${
+            isCollapsed ? 'rotate-180' : ''
+          }`}
+        />
       </button>
 
       {/* Header */}
       <div className="p-4 border-b border-gray-700 flex flex-col items-center">
         {!isCollapsed ? (
           <>
-           <div
-  className="flex items-center gap-2 mb-4 w-full cursor-pointer"
-  onClick={() => window.dispatchEvent(new Event("goToHome"))}
->
-  <div className="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
-  <span className="text-gray-300 truncate hover:text-white transition">NomaRoot</span>
-</div>
+            <div
+              className="flex items-center gap-2 mb-4 w-full cursor-pointer"
+              onClick={() => window.dispatchEvent(new Event('goToHome'))}
+            >
+              <div className="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
+              <span className="text-gray-300 truncate hover:text-white transition">
+                NomaRoot
+              </span>
+            </div>
 
-            <Button 
+            <Button
               className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2"
               onClick={onNewChat}
             >
               <Plus className="w-4 h-4 mr-2" />
               New Chat
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full text-gray-300 hover:bg-gray-700 mb-2"
               onClick={onSearchChats}
             >
@@ -72,16 +103,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           </>
         ) : (
           <div className="flex flex-col items-center space-y-3">
-            <Button 
-              size="icon" 
+            <Button
+              size="icon"
               className="bg-gray-700 hover:bg-gray-600 text-white"
               onClick={onNewChat}
             >
               <Plus className="w-4 h-4" />
             </Button>
-            <Button 
-              size="icon" 
-              variant="ghost" 
+            <Button
+              size="icon"
+              variant="ghost"
               className="text-gray-300 hover:bg-gray-700"
               onClick={onSearchChats}
             >
@@ -91,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Search (expanded only) */}
+      {/* Search */}
       {!isCollapsed && (
         <div className="p-3 border-b border-gray-700">
           <div className="relative">
@@ -106,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Chat List */}
+      {/* Chats */}
       <div className="flex-1 overflow-y-auto p-2">
         {!isCollapsed && pinnedChats.length > 0 && (
           <div className="mb-4">
@@ -115,7 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </h3>
             <div className="space-y-1">
               {pinnedChats.map((chat) => (
-                <div 
+                <div
                   key={chat.id}
                   className={`flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
                     activeChat === chat.id ? 'bg-gray-700' : ''
@@ -125,7 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="ml-2 overflow-hidden">
                     <p className="text-sm text-gray-200 truncate">{chat.title}</p>
-                    <p className="text-xs text-gray-400 truncate">{chat.lastActive}</p>
+                    <p className="text-xs text-gray-400 truncate">{new Date(chat.lastActive).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -140,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </h3>
             <div className="space-y-1">
               {unpinnedChats.map((chat) => (
-                <div 
+                <div
                   key={chat.id}
                   className={`flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
                     activeChat === chat.id ? 'bg-gray-700' : ''
@@ -150,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="ml-2 overflow-hidden">
                     <p className="text-sm text-gray-200 truncate">{chat.title}</p>
-                    <p className="text-xs text-gray-400 truncate">{chat.lastActive}</p>
+                    <p className="text-xs text-gray-400 truncate">{new Date(chat.lastActive).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -160,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {isCollapsed && (
           <div className="flex flex-col items-center space-y-2 pt-2">
-            {chats.slice(0, 5).map((chat) => (
+            {filteredChats.slice(0, 5).map((chat) => (
               <button
                 key={chat.id}
                 className={`p-2 rounded-lg hover:bg-gray-700/70 transition-colors ${
@@ -180,12 +211,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3 border-t border-gray-700">
         {!isCollapsed ? (
           <>
-            <p className="text-xs text-gray-500">Copyright © 2025</p>
-            <p className="text-xs text-gray-500 mt-1">Terms and conditions</p>
+            <p className="text-xs text-gray-500">© 2025 NomaRoot</p>
+            <p className="text-xs text-gray-500 mt-1">Terms & Privacy</p>
           </>
         ) : (
           <div className="flex justify-center">
-            <span className="text-xs text-gray-500">© 2025</span>
+            <span className="text-xs text-gray-500">©</span>
           </div>
         )}
       </div>

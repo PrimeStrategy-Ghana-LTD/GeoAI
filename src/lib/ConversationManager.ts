@@ -11,6 +11,7 @@ interface Message {
 interface Conversation {
   id: string;
   title: string;
+  isPinned: boolean;
   messages: Message[];
   createdAt: Date;
   lastActive: Date;
@@ -36,7 +37,7 @@ class ConversationManager {
     const saved = localStorage.getItem('landai-conversations');
     if (saved) {
       this.conversations = JSON.parse(saved, (key, value) => {
-        if (key === 'timestamp' || key === 'createdAt' || key === 'lastActive') {
+        if (['timestamp', 'createdAt', 'lastActive'].includes(key)) {
           return new Date(value);
         }
         return value;
@@ -45,16 +46,14 @@ class ConversationManager {
   }
 
   private persistConversations(): void {
-    localStorage.setItem(
-      'landai-conversations',
-      JSON.stringify(this.conversations)
-    );
+    localStorage.setItem('landai-conversations', JSON.stringify(this.conversations));
   }
 
   public startNewConversation(userMessage: string): Conversation {
     const newConversation: Conversation = {
       id: uuidv4(),
-      title: userMessage.substring(0, 50),
+      title: userMessage.substring(0, 50) || 'New Conversation',
+      isPinned: false,
       messages: [],
       createdAt: new Date(),
       lastActive: new Date()
@@ -90,8 +89,8 @@ class ConversationManager {
   private async getAIResponse(conversation: Conversation): Promise<Message> {
     try {
       const lastMessage = conversation.messages[conversation.messages.length - 1].content;
-      const { answer } = await api.query(lastMessage, { 
-        conversationId: conversation.id 
+      const { answer } = await api.query(lastMessage, {
+        conversationId: conversation.id
       });
 
       const aiMessage: Message = {
@@ -113,22 +112,27 @@ class ConversationManager {
   }
 
   public getConversations(): Conversation[] {
-    return [...this.conversations].sort(
-      (a, b) => b.lastActive.getTime() - a.lastActive.getTime()
-    );
+    return [...this.conversations].sort((a, b) => {
+      const aPriority = a.isPinned ? 1 : 0;
+      const bPriority = b.isPinned ? 1 : 0;
+      if (aPriority !== bPriority) return bPriority - aPriority;
+      return b.lastActive.getTime() - a.lastActive.getTime();
+    });
   }
 
   public getCurrentConversation(): Conversation {
     if (!this.currentConversationId) {
       throw new Error('No active conversation');
     }
-    const conversation = this.conversations.find(
-      c => c.id === this.currentConversationId
-    );
+    const conversation = this.conversations.find(c => c.id === this.currentConversationId);
     if (!conversation) {
       throw new Error('Conversation not found');
     }
     return conversation;
+  }
+
+  public getCurrentConversationId(): string | null {
+    return this.currentConversationId;
   }
 
   public setActiveConversation(id: string): void {
@@ -146,7 +150,14 @@ class ConversationManager {
     }
     this.persistConversations();
   }
+
+  public togglePin(id: string): void {
+    const convo = this.conversations.find(c => c.id === id);
+    if (convo) {
+      convo.isPinned = !convo.isPinned;
+      this.persistConversations();
+    }
+  }
 }
 
-// Singleton export
 export const conversationManager = ConversationManager.getInstance();
