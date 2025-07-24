@@ -38,7 +38,7 @@ export async function signupUser(email: string, password: string, name: string):
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email,
+       email: email,
       password,
       full_name: name // 🔥 This is the correct key expected by your backend
     }),
