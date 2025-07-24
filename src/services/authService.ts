@@ -9,12 +9,15 @@ interface AuthResponse {
   };
 }
 
-// ✅ LOGIN: Uses JSON body with "email" and "password"
+// ✅ LOGIN: Sends correct credentials
 export async function loginUser(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({
+      email, // Backend expects "email"
+      password,
+    }),
   });
 
   const data = await res.json();
@@ -37,7 +40,7 @@ export async function signupUser(email: string, password: string, name: string):
     body: JSON.stringify({
       email,
       password,
-      name  // ✅ Your backend expects "name", NOT "full_name"
+      name, // Use "name" as expected by backend
     }),
   });
 
@@ -52,7 +55,6 @@ export async function signupUser(email: string, password: string, name: string):
 
   return data;
 }
-
 
 // ✅ TOKEN VALIDATION: Verifies user session token
 export async function validateToken(token: string): Promise<boolean> {
