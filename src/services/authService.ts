@@ -37,7 +37,7 @@ export async function signupUser(email: string, password: string, name: string):
     body: JSON.stringify({
       email,
       password,
-      name  // ✅ Correct field expected by backend
+      name  // ✅ Your backend expects "name", NOT "full_name"
     }),
   });
 
@@ -52,6 +52,7 @@ export async function signupUser(email: string, password: string, name: string):
 
   return data;
 }
+
 
 // ✅ TOKEN VALIDATION: Verifies user session token
 export async function validateToken(token: string): Promise<boolean> {
