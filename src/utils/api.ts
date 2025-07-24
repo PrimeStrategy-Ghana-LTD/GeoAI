@@ -26,6 +26,11 @@ export class APIClient {
     return `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
+  // ✅ This is the new method you can now call like: api.resetSession()
+  resetSession(): void {
+    this.sessionId = this.generateSessionId();
+  }
+
   async login(email: string, password: string): Promise<AuthResponse> {
     return this.fetchWrapper<AuthResponse>('/auth/login', {
       method: 'POST',

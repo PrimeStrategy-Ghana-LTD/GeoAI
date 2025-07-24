@@ -46,10 +46,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-b border-gray-700 flex flex-col items-center">
         {!isCollapsed ? (
           <>
-            <div className="flex items-center gap-2 mb-4 w-full">
-              <div className="w-4 h-4 bg-gray-400 rounded-full flex-shrink-0"></div>
-              <span className="text-gray-300 truncate">Land-Ai</span>
-            </div>
+           <div
+  className="flex items-center gap-2 mb-4 w-full cursor-pointer"
+  onClick={() => window.dispatchEvent(new Event("goToHome"))}
+>
+  <div className="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0"></div>
+  <span className="text-gray-300 truncate hover:text-white transition">NomaRoot</span>
+</div>
+
             <Button 
               className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2"
               onClick={onNewChat}
