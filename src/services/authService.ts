@@ -9,15 +9,12 @@ interface AuthResponse {
   };
 }
 
-// ✅ LOGIN: Sends correct credentials
+// ✅ LOGIN: Uses JSON body with "email" and "password"
 export async function loginUser(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      username: email, // FastAPI uses "username" for OAuth2 login
-      password 
-    }),
+    body: JSON.stringify({ email, password })
   });
 
   const data = await res.json();
@@ -32,15 +29,15 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
   return data;
 }
 
-// ✅ SIGNUP: Sends name as full_name (as required by backend)
+// ✅ SIGNUP: Sends "name" (NOT "full_name")
 export async function signupUser(email: string, password: string, name: string): Promise<AuthResponse> {
- const res = await fetch(`${BASE_URL}/auth/register`, {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-       email: email,
+      email,
       password,
-      full_name: name // 🔥 This is the correct key expected by your backend
+      name  // ✅ Correct field expected by backend
     }),
   });
 
