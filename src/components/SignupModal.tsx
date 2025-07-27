@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, LogIn } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface SignupModalProps {
-  open: boolean;
   onClose: () => void;
   onSignup: (data: { email: string; password: string; name: string }) => Promise<void>;
-  onSignupSuccess?: (username: string) => void;
   onSwitchToLogin: () => void;
   initialValues?: {
     name: string;
@@ -17,7 +15,6 @@ interface SignupModalProps {
 }
 
 const SignupModal: React.FC<SignupModalProps> = ({
-  open,
   onClose,
   onSignup,
   onSwitchToLogin,
@@ -63,8 +60,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
     };
     window.location.href = authUrls[provider];
   };
-
-  if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
@@ -137,45 +132,31 @@ const SignupModal: React.FC<SignupModalProps> = ({
               <>
                 {/* Email Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="signup-name" className="block text-sm font-medium text-gray-300 mb-1">
-                      Full Name
-                    </label>
-                    <Input
-                      id="signup-name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="bg-[#3b3c44] border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="signup-email" className="block text-sm font-medium text-gray-300 mb-1">
-                      Email
-                    </label>
-                    <Input
-                      id="signup-email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-[#3b3c44] border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="signup-password" className="block text-sm font-medium text-gray-300 mb-1">
-                      Password
-                    </label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-[#3b3c44] border-gray-700 text-white"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Must be 8+ characters with uppercase, lowercase, and a number
-                    </p>
-                  </div>
+                  <Input
+                    id="name"
+                    placeholder="Full Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-[#3b3c44] border-gray-700 text-white"
+                  />
+                  <Input
+                    id="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-[#3b3c44] border-gray-700 text-white"
+                  />
+                  <Input
+                    id="password"
+                    placeholder="Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-[#3b3c44] border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Must be 8+ characters with uppercase, lowercase, and a number
+                  </p>
 
                   <Button
                     type="submit"
@@ -194,21 +175,21 @@ const SignupModal: React.FC<SignupModalProps> = ({
               <div className="space-y-4">
                 <Button
                   onClick={() => handleSocialLogin('google')}
-                  className="w-full flex items-center justify-center gap-3 bg-white text-black hover:bg-white/90 font-medium py-3 transition"
+                  className="w-full flex items-center justify-center gap-3 bg-white text-black font-medium py-3 hover:opacity-90 transition"
                 >
                   <img src="/images/google-icon.png" alt="Google" className="w-5 h-5" />
                   Continue with Google
                 </Button>
                 <Button
                   onClick={() => handleSocialLogin('microsoft')}
-                  className="w-full flex items-center justify-center gap-3 bg-[#f3f3f3] text-black hover:bg-[#f3f3f3]/90 font-medium py-3 transition"
+                  className="w-full flex items-center justify-center gap-3 bg-[#f3f3f3] text-black font-medium py-3 hover:opacity-90 transition"
                 >
                   <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-5 h-5" />
                   Continue with Microsoft
                 </Button>
                 <Button
                   onClick={() => handleSocialLogin('apple')}
-                  className="w-full flex items-center justify-center gap-3 bg-black text-white hover:bg-black/90 font-medium py-3 transition"
+                  className="w-full flex items-center justify-center gap-3 bg-black text-white font-medium py-3 hover:opacity-90 transition"
                 >
                   <img src="/images/apple-icon.png" alt="Apple" className="w-5 h-5" />
                   Continue with Apple
@@ -225,9 +206,8 @@ const SignupModal: React.FC<SignupModalProps> = ({
               Already have an account?{' '}
               <button
                 onClick={onSwitchToLogin}
-                className="text-blue-400 hover:text-blue-300 font-medium flex items-center justify-center gap-1"
+                className="text-blue-400 hover:text-blue-300 font-medium"
               >
-                <LogIn className="w-4 h-4" />
                 Log in
               </button>
             </div>
