@@ -4,16 +4,19 @@ import { Input } from '@/components/ui/input';
 import { X, UserPlus, LogIn } from 'lucide-react';
 
 interface LoginModalProps {
+  open: boolean;
   onClose: () => void;
   onLogin: (credentials: { email: string; password: string }) => Promise<void>;
+  onLoginSuccess?: (username: string) => void;
   email: string;
   setEmail: (email: string) => void;
   password: string;
   setPassword: (password: string) => void;
-  onSwitchToSignup: () => void;
+  onSwitchToSignup?: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({
+  open,
   onClose,
   onLogin,
   email,
@@ -46,7 +49,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   const handleSocialLogin = (provider: 'google' | 'microsoft' | 'apple') => {
-    // Replace with your actual OAuth endpoints
     const authUrls = {
       google: 'https://nomar.up.railway.app/auth/google',
       microsoft: 'https://nomar.up.railway.app/auth/microsoft',
@@ -54,6 +56,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
     };
     window.location.href = authUrls[provider];
   };
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">

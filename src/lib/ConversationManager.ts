@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import api from '../utils/api';
+import api from '@/utils/api';
 
 interface Message {
   id: string;
@@ -34,19 +34,31 @@ class ConversationManager {
   }
 
   private loadConversations(): void {
-    const saved = localStorage.getItem('landai-conversations');
-    if (saved) {
-      this.conversations = JSON.parse(saved, (key, value) => {
-        if (['timestamp', 'createdAt', 'lastActive'].includes(key)) {
-          return new Date(value);
-        }
-        return value;
-      });
+    try {
+      const saved = localStorage.getItem('landai-conversations');
+      if (saved) {
+        this.conversations = JSON.parse(saved, (key, value) => {
+          if (['timestamp', 'createdAt', 'lastActive'].includes(key)) {
+            return new Date(value);
+          }
+          return value;
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+      this.conversations = [];
     }
   }
 
   private persistConversations(): void {
-    localStorage.setItem('landai-conversations', JSON.stringify(this.conversations));
+    try {
+      localStorage.setItem(
+        'landai-conversations',
+        JSON.stringify(this.conversations)
+      );
+    } catch (error) {
+      console.error('Failed to persist conversations:', error);
+    }
   }
 
   public startNewConversation(userMessage: string): Conversation {
@@ -86,6 +98,24 @@ class ConversationManager {
     return this.getAIResponse(conversation);
   }
 
+  public async addAssistantMessage(content: string): Promise<void> {
+    if (!this.currentConversationId) {
+      throw new Error('No active conversation');
+    }
+
+    const conversation = this.getCurrentConversation();
+    const aiMessage: Message = {
+      id: uuidv4(),
+      content,
+      role: 'assistant',
+      timestamp: new Date()
+    };
+
+    conversation.messages.push(aiMessage);
+    conversation.lastActive = new Date();
+    this.persistConversations();
+  }
+
   private async getAIResponse(conversation: Conversation): Promise<Message> {
     try {
       const lastMessage = conversation.messages[conversation.messages.length - 1].content;
@@ -107,7 +137,19 @@ class ConversationManager {
       return aiMessage;
     } catch (error) {
       console.error('Failed to get AI response:', error);
-      throw error;
+      
+      // Fallback message
+      const fallbackMessage: Message = {
+        id: uuidv4(),
+        content: "I'm having trouble connecting. Please try again later.",
+        role: 'assistant',
+        timestamp: new Date()
+      };
+
+      conversation.messages.push(fallbackMessage);
+      this.persistConversations();
+      
+      return fallbackMessage;
     }
   }
 
@@ -157,6 +199,15 @@ class ConversationManager {
       convo.isPinned = !convo.isPinned;
       this.persistConversations();
     }
+  }
+
+  public searchConversations(query: string): Conversation[] {
+    const lowerQuery = query.toLowerCase();
+    return this.conversations.filter(
+      convo =>
+        convo.title.toLowerCase().includes(lowerQuery) ||
+        convo.messages.some(msg => msg.content.toLowerCase().includes(lowerQuery))
+    );
   }
 }
 
