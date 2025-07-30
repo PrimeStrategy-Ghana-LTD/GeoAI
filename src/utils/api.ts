@@ -54,17 +54,24 @@ export class APIClient {
   }
 
   async query(
-    question: string,
-    options: { conversationId?: string } = {}
-  ): Promise<QueryResponse> {
-    return this.fetchWrapper<QueryResponse>('/query', {
-      method: 'POST',
-      body: JSON.stringify({
-        text: question,
-        conversation_id: options.conversationId || this.sessionId
-      })
-    });
-  }
+  question: string,
+  options: { conversationId?: string } = {}
+): Promise<QueryResponse> {
+  const raw = await this.fetchWrapper<any>('/query', {
+    method: 'POST',
+    body: JSON.stringify({
+      text: question,
+      conversation_id: options.conversationId || this.sessionId
+    })
+  });
+
+  return {
+    answer: raw.response, // 
+    conversation_id: raw.conversation_id,
+    processing_time: raw.processing_time
+  };
+}
+
 
   private async fetchWrapper<T>(
     endpoint: string,
