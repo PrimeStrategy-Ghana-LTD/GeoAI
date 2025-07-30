@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Mic, Star, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare } from 'lucide-react';
+import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare } from 'lucide-react';
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -8,13 +8,11 @@ import { loginUser, signupUser } from '@/services/authService';
 import { conversationManager } from '@/lib/ConversationManager';
 
 const AppLayout: React.FC<{}> = () => {
-
   const [currentView, setCurrentView] = useState<'home' | 'chat'>('home');
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<
-  { role: 'user' | 'ai'; text: string; isLoading?: boolean }[]
->([]);
-
+    { role: 'user' | 'ai'; text: string; isLoading?: boolean }[]
+  >([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchCount, setSearchCount] = useState(0);
   const [showSearchPopup, setShowSearchPopup] = useState(false);
@@ -25,24 +23,24 @@ const AppLayout: React.FC<{}> = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMicActive, setIsMicActive] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [userInitial, setUserInitial] = useState<string>('U'); // Added for avatar initial
 
-
+  // Check auth status on mount
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(!!token);
   }, []);
 
-
+  // Home view event listener
   useEffect(() => {
     const handleGoToHome = () => setCurrentView('home');
     window.addEventListener('goToHome', handleGoToHome);
     return () => window.removeEventListener('goToHome', handleGoToHome);
   }, []);
 
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-  
   };
 
   const handleVoiceInput = () => {
@@ -54,7 +52,6 @@ const AppLayout: React.FC<{}> = () => {
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-
     recognition.onstart = () => setIsMicActive(true);
     recognition.onresult = (e: any) => {
       setInputValue(e.results[0][0].transcript);
@@ -62,17 +59,16 @@ const AppLayout: React.FC<{}> = () => {
     };
     recognition.onerror = () => setIsMicActive(false);
     recognition.onend = () => setIsMicActive(false);
-
     recognition.start();
   };
 
- 
   const handleLogin = async ({ email, password }: { email: string; password: string }) => {
     try {
       const data = await loginUser(email, password);
       localStorage.setItem('access_token', data.access_token);
       setIsLoggedIn(true);
       setShowLoginModal(false);
+      setUserInitial(email.charAt(0).toUpperCase()); // Capture first letter of email
     } catch (err: any) {
       alert(err.message);
     }
@@ -84,55 +80,91 @@ const AppLayout: React.FC<{}> = () => {
       localStorage.setItem('access_token', data.access_token);
       setIsLoggedIn(true);
       setShowSignupModal(false);
+      setUserInitial(name.charAt(0).toUpperCase()); // Capture first letter of name
     } catch (err: any) {
       alert(err.message);
     }
   };
 
- const handleSendMessage = async (userTextParam?: string) => {
-  const userText = (userTextParam || inputValue).trim();
-  if (!userText) return;
+  const handleSendMessage = async (userTextParam?: string) => {
+    const userText = (userTextParam || inputValue).trim();
+    if (!userText) return;
 
-  setIsLoading(true);
-  setMessages(prev => [...prev, { role: 'user' as const, text: userText }]);
-  setInputValue('');
+    setIsLoading(true);
+    setCurrentView('chat'); 
+    const controller = new AbortController();
+    setAbortController(controller);
+    
+    setMessages(prev => [...prev, 
+      { role: 'user', text: userText },
+      { role: 'ai', text: '', isLoading: true }
+    ]);
+    setInputValue('');
 
-  try {
-    if (!activeChat) {
-      const newConvo = conversationManager.startNewConversation(userText);
-      if (!newConvo) throw new Error('Failed to create new conversation');
-      setActiveChat(newConvo.id);
-      conversationManager.setActiveConversation(newConvo.id);
-    } else {
-      conversationManager.setActiveConversation(activeChat);
+    try {
+      if (!activeChat) {
+        const newConvo = conversationManager.startNewConversation(userText);
+        if (!newConvo) throw new Error('Failed to create new conversation');
+        setActiveChat(newConvo.id);
+        conversationManager.setActiveConversation(newConvo.id);
+      } else {
+        conversationManager.setActiveConversation(activeChat);
+      }
+
+      const aiResponse = await conversationManager.addUserMessage(userText, {
+        abortSignal: controller.signal
+      });
+      
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { 
+          role: 'ai', 
+          text: aiResponse.content,
+          isLoading: false
+        };
+        return updated;
+      });
+
+      if (!isLoggedIn) {
+        setSearchCount(prev => prev + 1);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Message processing error:', error);
+      }
+    } finally {
+      setIsLoading(false);
+      setAbortController(null);
     }
+  };
 
-    const aiResponse = await conversationManager.addUserMessage(userText);
-    setMessages(prev => [...prev, { role: 'ai' as const, text: aiResponse.content }]);
-
-    if (!isLoggedIn) {
-      setSearchCount(prev => prev + 1);
+  const handleStopGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+      setMessages(prev => {
+        const updated = [...prev];
+        if (updated.length > 0 && updated[updated.length - 1].isLoading) {
+          updated.pop();
+        }
+        return updated;
+      });
     }
-  } catch (error) {
-    console.error('Message processing error:', error);
-  } finally {
-    setIsLoading(false);
-    setCurrentView('chat');
-  }
-};
+  };
 
+  const handleBubbleClick = (text: string) => {
+    setInputValue(text);
+    setTimeout(() => handleSendMessage(text), 50);
+  };
 
-const handleBubbleClick = (text: string) => {
-  setInputValue(text);
-  setTimeout(() => handleSendMessage(text), 50);
-};
-
-  
   const renderAuthDropdown = () => (
     isLoggedIn ? (
       <div className="relative group">
         <button className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors">
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">U</div>
+          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
+            {userInitial}
+          </div>
           <ChevronDown size={14} />
         </button>
         <div className="absolute right-0 mt-2 w-32 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
@@ -142,6 +174,7 @@ const handleBubbleClick = (text: string) => {
               setIsLoggedIn(false);
               setMessages([]);
               setCurrentView('home');
+              setUserInitial('U');
             }}
             className="w-full text-left px-4 py-2 text-sm hover:bg-[#3b3c44] transition-colors"
           >
@@ -167,14 +200,12 @@ const handleBubbleClick = (text: string) => {
     )
   );
 
-   const renderChatContent = () => (
+  const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      {/* Header */}
       <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
         {renderAuthDropdown()}
       </div>
 
-      {/* Chat Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {messages.map((msg, idx) => (
           <div
@@ -186,44 +217,82 @@ const handleBubbleClick = (text: string) => {
             {msg.role === 'ai' && (
               <div className="flex-shrink-0 mt-1">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                  {msg.isLoading ? (
-                    <div className="flex space-x-1">
-                      <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  ) : (
-                    <Star className="h-3 w-3 text-white" />
-                  )}
+                  <img 
+                    src="/images/Vector-star.png" 
+                    className="h-3 w-3 brightness-125" 
+                    alt="AI" 
+                  />
                 </div>
               </div>
             )}
-            
+
             <div className={`relative rounded-xl p-4 transition-all duration-200 ${
               msg.role === 'user'
                 ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                 : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50 shadow'
             }`}>
               {msg.isLoading ? (
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex items-center gap-2">
+                  <div className="flex space-x-1 items-center">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-xs text-gray-400">Generating...</span>
                 </div>
               ) : (
-                <p className="text-sm/relaxed">{msg.text}</p>
+                <>
+                  <p className="text-sm/relaxed">{msg.text}</p>
+                  <div className="absolute right-2 -top-2 flex gap-1">
+                    {msg.role === 'user' && (
+                      <button 
+                        onClick={() => setInputValue(msg.text)}
+                        className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+                        title="Edit"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => copyToClipboard(msg.text)}
+                      className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+                      title="Copy"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Input Area */}
+      {isLoading && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <span className="text-sm text-white">Generating response</span>
+          <button 
+            onClick={handleStopGeneration}
+            className="ml-2 text-xs text-red-400 hover:text-red-300 flex items-center"
+          >
+            <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Stop
+          </button>
+        </div>
+      )}
+
       <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
-            <img 
-              src="/images/Vector-star.png" 
+            <img
+              src="/images/Vector-star.png"
               alt=""
               className="h-4 w-4 mr-3 brightness-125"
             />
@@ -235,15 +304,15 @@ const handleBubbleClick = (text: string) => {
               placeholder="Ask a follow-up..."
               disabled={!isLoggedIn && searchCount >= 3}
             />
-            <button 
+            <button
               onClick={handleVoiceInput}
               disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
-              className="ml-3 transition-transform hover:scale-110 disabled:opacity-50"
+              className={`ml-3 transition-all ${isMicActive ? 'animate-pulse text-red-400' : 'text-blue-400 hover:text-blue-300'}`}
             >
               {isMicActive ? (
-                <Loader2 className="h-4 w-4 animate-spin text-red-400" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Mic className="h-4 w-4 text-blue-400" />
+                <Mic className="h-4 w-4" />
               )}
             </button>
           </div>
@@ -251,40 +320,41 @@ const handleBubbleClick = (text: string) => {
       </div>
     </div>
   );
+
   return (
     <div className="flex h-screen bg-[#1e1f24] text-white">
-{currentView === 'chat' && (
-  <Sidebar
-    isLoading={isLoading}
-    activeChat={activeChat}
-    onNewChat={() => {
-      const newConvo = conversationManager.startNewConversation('');
-      setActiveChat(newConvo.id);
-      setMessages([]);
-      setInputValue('');
-      setCurrentView('chat');
-    }}
-    onSearchChats={() => setShowSearchPopup(true)}
-onChatSelect={(chatId) => {
-  conversationManager.setActiveConversation(chatId);
-  const convo = conversationManager.getCurrentConversation();
-  setMessages(
-    convo.messages.map(m => ({
-      role: m.role === 'assistant' ? 'ai' : m.role,
-      text: m.content
-    }))
-  );
-  setActiveChat(chatId);
-  setCurrentView('chat');
-}}
-  />
-)}
+      {currentView === 'chat' && (
+        <Sidebar
+          isLoading={isLoading}
+          activeChat={activeChat}
+          onNewChat={() => {
+            const newConvo = conversationManager.startNewConversation('');
+            setActiveChat(newConvo.id);
+            setMessages([]);
+            setInputValue('');
+            setCurrentView('chat');
+          }}
+          onSearchChats={() => setShowSearchPopup(true)}
+          onChatSelect={(chatId) => {
+            conversationManager.setActiveConversation(chatId);
+            const convo = conversationManager.getCurrentConversation();
+            setMessages(
+              convo.messages.map(m => ({
+                role: m.role === 'assistant' ? 'ai' : m.role,
+                text: m.content
+              }))
+            );
+            setActiveChat(chatId);
+            setCurrentView('chat');
+          }}
+        />
+      )}
 
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? (
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
             <header className="hidden md:flex justify-between items-center mb-8 w-full max-w-6xl">
-              <div 
+              <div
                 className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors"
                 onClick={() => setCurrentView('home')}
               >
@@ -312,7 +382,7 @@ onChatSelect={(chatId) => {
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
                   <img src="/images/Vector-star.png" className="w-4 h-4" />
                 </div>
-                <button 
+                <button
                   className="absolute right-4 top-1/2 transform -translate-y-1/2"
                   onClick={handleVoiceInput}
                   disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
@@ -354,23 +424,23 @@ onChatSelect={(chatId) => {
         )}
       </div>
 
-{showSearchPopup && (
-  <SearchChatsInterface
-    onClose={() => setShowSearchPopup(false)}
-    onChatSelect={(chatId) => {
-      conversationManager.setActiveConversation(chatId);
-      const convo = conversationManager.getCurrentConversation();
-      setMessages(
-        convo.messages.map(m => ({
-          role: m.role === 'assistant' ? 'ai' : m.role,
-          text: m.content
-        }))
-      );
-      setActiveChat(chatId);
-      setCurrentView('chat');
-    }}
-  />
-)}
+      {showSearchPopup && (
+        <SearchChatsInterface
+          onClose={() => setShowSearchPopup(false)}
+          onChatSelect={(chatId) => {
+            conversationManager.setActiveConversation(chatId);
+            const convo = conversationManager.getCurrentConversation();
+            setMessages(
+              convo.messages.map(m => ({
+                role: m.role === 'assistant' ? 'ai' : m.role,
+                text: m.content
+              }))
+            );
+            setActiveChat(chatId);
+            setCurrentView('chat');
+          }}
+        />
+      )}
 
       {showLoginModal && (
         <LoginModal

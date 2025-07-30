@@ -66,7 +66,10 @@ class ConversationManager {
     return newConversation;
   }
 
-  public async addUserMessage(content: string): Promise<Message> {
+  public async addUserMessage(
+    content: string,
+    options?: { abortSignal?: AbortSignal }
+  ): Promise<Message> {
     if (!this.currentConversationId) {
       this.startNewConversation(content);
     }
@@ -83,14 +86,18 @@ class ConversationManager {
     conversation.lastActive = new Date();
     this.persistConversations();
 
-    return this.getAIResponse(conversation);
+    return this.getAIResponse(conversation, options?.abortSignal);
   }
 
-  private async getAIResponse(conversation: Conversation): Promise<Message> {
+  private async getAIResponse(
+    conversation: Conversation,
+    abortSignal?: AbortSignal
+  ): Promise<Message> {
     try {
       const lastMessage = conversation.messages[conversation.messages.length - 1].content;
       const { answer } = await api.query(lastMessage, {
-        conversationId: conversation.id
+        conversationId: conversation.id,
+        signal: abortSignal
       });
 
       const aiMessage: Message = {

@@ -45,14 +45,17 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     loadChats();
-    const eventListener = () => loadChats();
-    window.addEventListener('chatListUpdated', eventListener);
-    return () => window.removeEventListener('chatListUpdated', eventListener);
+    const listener = () => loadChats();
+    window.addEventListener('chatListUpdated', listener);
+    return () => window.removeEventListener('chatListUpdated', listener);
   }, []);
 
   const filteredChats = chats.filter((chat) =>
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const pinnedChats = filteredChats.filter((c) => c.isPinned);
+  const unpinnedChats = filteredChats.filter((c) => !c.isPinned);
 
   const togglePin = (chatId: string) => {
     conversationManager.togglePin(chatId);
@@ -64,33 +67,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     window.dispatchEvent(new Event('chatListUpdated'));
   };
 
-  const pinnedChats = filteredChats.filter((chat) => chat.isPinned);
-  const unpinnedChats = filteredChats.filter((chat) => !chat.isPinned);
-
   return (
-    <div className={`h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    <div className={`h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+      
       {/* Collapse Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-1/2 z-10 bg-gray-700 rounded-full p-1 border border-gray-600 hover:bg-gray-600 transition-colors"
+        className="absolute -right-3 top-1/2 z-10 bg-gray-700 border border-gray-600 rounded-full p-1 hover:bg-gray-600"
       >
-        <ChevronRight
-          className={`w-4 h-4 text-gray-300 transition-transform ${
-            isCollapsed ? 'rotate-180' : ''
-          }`}
-        />
+        <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Header with Loading State */}
-      <div className="p-4 border-b border-gray-700 flex flex-col items-center">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-700">
         {!isCollapsed ? (
           <>
-            <div
-              className="flex items-center gap-2 mb-4 w-full cursor-pointer group"
-              onClick={() => window.dispatchEvent(new Event('goToHome'))}
-            >
+            <div className="flex items-center gap-2 mb-3 cursor-pointer group" onClick={() => window.dispatchEvent(new Event('goToHome'))}>
               {isLoading ? (
                 <div className="flex items-center gap-2 animate-pulse">
                   <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
@@ -98,26 +90,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="w-4 h-4 bg-blue-500 rounded-full flex-shrink-0 group-hover:bg-blue-400 transition-colors"></div>
-                  <span className="text-gray-300 truncate group-hover:text-white transition-colors">
-                    NomaRoot
-                  </span>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full group-hover:bg-blue-400 transition" />
+                  <span className="text-gray-300 group-hover:text-white text-sm font-semibold">NomaRoot</span>
                 </>
               )}
             </div>
 
-            <Button
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2 transition-colors"
-              onClick={onNewChat}
-            >
+            <Button className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2" onClick={onNewChat}>
               <Plus className="w-4 h-4 mr-2" />
               New Chat
             </Button>
-            <Button
-              variant="ghost"
-              className="w-full text-gray-300 hover:bg-gray-700 mb-2 transition-colors"
-              onClick={onSearchChats}
-            >
+            <Button variant="ghost" className="w-full text-gray-300 hover:bg-gray-700 mb-2" onClick={onSearchChats}>
               <Search className="w-4 h-4 mr-2" />
               Search Chats
             </Button>
@@ -128,21 +111,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
             ) : (
               <>
-                <Button
-                  size="icon"
-                  className="bg-gray-700 hover:bg-gray-600 text-white transition-colors"
-                  onClick={onNewChat}
-                  title="New Chat"
-                >
+                <Button size="icon" className="bg-gray-700 hover:bg-gray-600 text-white" onClick={onNewChat} title="New Chat">
                   <Plus className="w-4 h-4" />
                 </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-gray-300 hover:bg-gray-700 transition-colors"
-                  onClick={onSearchChats}
-                  title="Search Chats"
-                >
+                <Button size="icon" variant="ghost" className="text-gray-300 hover:bg-gray-700" onClick={onSearchChats} title="Search Chats">
                   <Search className="w-4 h-4" />
                 </Button>
               </>
@@ -155,10 +127,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       {!isCollapsed && (
         <div className="p-3 border-b border-gray-700">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               placeholder="Search chats..."
-              className="w-full pl-9 pr-3 py-2 bg-gray-700 text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 transition-all"
+              className="w-full pl-9 pr-3 py-2 bg-gray-700 text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -166,134 +138,53 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Chats List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto px-2 py-3">
         {!isCollapsed && pinnedChats.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-xs text-gray-400 mb-2 px-2 flex items-center">
-              <Star className="w-3 h-3 mr-1" /> Pinned
-            </h3>
-            <div className="space-y-1">
-              {pinnedChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
-                    activeChat === chat.id ? 'bg-gray-700' : ''
-                  }`}
-                  onClick={() => onChatSelect(chat.id)}
-                >
-                  <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <div className="ml-2 overflow-hidden flex-1 min-w-0">
-                    <p className="text-sm text-gray-200 truncate">{chat.title}</p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {chat.lastActive.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePin(chat.id);
-                      }}
-                      className="p-1 text-gray-400 hover:text-yellow-400 transition-colors"
-                      title="Unpin"
-                    >
-                      <Star className="w-3 h-3 fill-current" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteChat(chat.id);
-                      }}
-                      className="p-1 text-gray-400 hover:text-red-400 transition-colors ml-1"
-                      title="Delete"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+          <>
+            <div className="text-xs text-gray-400 px-2 mb-2 flex items-center">
+              <Star className="w-3 h-3 mr-1" />
+              Pinned
             </div>
-          </div>
+            {pinnedChats.map((chat) => (
+              <ChatRow
+                key={chat.id}
+                chat={chat}
+                isActive={activeChat === chat.id}
+                onClick={() => onChatSelect(chat.id)}
+                onTogglePin={() => togglePin(chat.id)}
+                onDelete={() => deleteChat(chat.id)}
+                pinned
+              />
+            ))}
+          </>
         )}
 
         {!isCollapsed && unpinnedChats.length > 0 && (
-          <div>
-            <h3 className="text-xs text-gray-400 mb-2 px-2 flex items-center">
-              <History className="w-3 h-3 mr-1" /> Recent
-            </h3>
-            <div className="space-y-1">
-              {unpinnedChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
-                    activeChat === chat.id ? 'bg-gray-700' : ''
-                  }`}
-                  onClick={() => onChatSelect(chat.id)}
-                >
-                  <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <div className="ml-2 overflow-hidden flex-1 min-w-0">
-                    <p className="text-sm text-gray-200 truncate">{chat.title}</p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {chat.lastActive.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePin(chat.id);
-                      }}
-                      className="p-1 text-gray-400 hover:text-yellow-400 transition-colors"
-                      title="Pin"
-                    >
-                      <Star className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteChat(chat.id);
-                      }}
-                      className="p-1 text-gray-400 hover:text-red-400 transition-colors ml-1"
-                      title="Delete"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+          <>
+            <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center">
+              <History className="w-3 h-3 mr-1" />
+              Recent
             </div>
-          </div>
+            {unpinnedChats.map((chat) => (
+              <ChatRow
+                key={chat.id}
+                chat={chat}
+                isActive={activeChat === chat.id}
+                onClick={() => onChatSelect(chat.id)}
+                onTogglePin={() => togglePin(chat.id)}
+                onDelete={() => deleteChat(chat.id)}
+              />
+            ))}
+          </>
         )}
 
         {isCollapsed && (
-          <div className="flex flex-col items-center space-y-2 pt-2">
+          <div className="flex flex-col items-center gap-2">
             {filteredChats.slice(0, 5).map((chat) => (
               <button
                 key={chat.id}
-                className={`p-2 rounded-lg hover:bg-gray-700/70 transition-colors ${
+                className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
                   activeChat === chat.id ? 'bg-gray-700' : ''
                 }`}
                 onClick={() => onChatSelect(chat.id)}
@@ -307,20 +198,83 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-700">
+      <div className="p-3 border-t border-gray-700 text-xs text-gray-500">
         {!isCollapsed ? (
           <>
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} NomaRoot</p>
-            <p className="text-xs text-gray-500 mt-1">Terms & Privacy</p>
+            <p>© {new Date().getFullYear()} NomaRoot</p>
+            <p className="mt-1">Terms & Privacy</p>
           </>
         ) : (
-          <div className="flex justify-center">
-            <span className="text-xs text-gray-500">©</span>
-          </div>
+          <div className="text-center">©</div>
         )}
       </div>
     </div>
   );
 };
+
+// ChatRow: Shared row for pinned & unpinned chats
+const ChatRow = ({
+  chat,
+  isActive,
+  onClick,
+  onTogglePin,
+  onDelete,
+  pinned = false
+}: {
+  chat: { id: string; title: string; lastActive: Date };
+  isActive: boolean;
+  onClick: () => void;
+  onTogglePin: () => void;
+  onDelete: () => void;
+  pinned?: boolean;
+}) => (
+  <div
+    className={`group flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
+      isActive ? 'bg-gray-700' : ''
+    }`}
+    onClick={onClick}
+  >
+    <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
+    <div className="ml-2 overflow-hidden flex-1 min-w-0">
+      <p className="text-sm text-gray-200 truncate">{chat.title}</p>
+      <p className="text-xs text-gray-400 truncate">
+        {chat.lastActive.toLocaleString()}
+      </p>
+    </div>
+    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onTogglePin();
+        }}
+        className="p-1 text-gray-400 hover:text-yellow-400"
+        title={pinned ? 'Unpin' : 'Pin'}
+      >
+        <Star className="w-3 h-3" />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className="p-1 text-gray-400 hover:text-red-400 ml-1"
+        title="Delete"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-3 w-3"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
 
 export default Sidebar;

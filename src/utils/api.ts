@@ -15,6 +15,15 @@ interface QueryResponse {
   processing_time?: number;
 }
 
+interface QueryOptions {
+  conversationId?: string;
+  signal?: AbortSignal;
+}
+
+interface FetchOptions extends RequestInit {
+  signal?: AbortSignal;
+}
+
 export class APIClient {
   private sessionId: string;
 
@@ -26,7 +35,6 @@ export class APIClient {
     return `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
-  // ✅ This is the new method you can now call like: api.resetSession()
   resetSession(): void {
     this.sessionId = this.generateSessionId();
   }
@@ -54,28 +62,28 @@ export class APIClient {
   }
 
   async query(
-  question: string,
-  options: { conversationId?: string } = {}
-): Promise<QueryResponse> {
-  const raw = await this.fetchWrapper<any>('/query', {
-    method: 'POST',
-    body: JSON.stringify({
-      text: question,
-      conversation_id: options.conversationId || this.sessionId
-    })
-  });
+    question: string,
+    options: QueryOptions = {}
+  ): Promise<QueryResponse> {
+    const raw = await this.fetchWrapper<any>('/query', {
+      method: 'POST',
+      body: JSON.stringify({
+        text: question,
+        conversation_id: options.conversationId || this.sessionId
+      }),
+      signal: options.signal
+    });
 
-  return {
-    answer: raw.response, // 
-    conversation_id: raw.conversation_id,
-    processing_time: raw.processing_time
-  };
-}
-
+    return {
+      answer: raw.response,
+      conversation_id: raw.conversation_id,
+      processing_time: raw.processing_time
+    };
+  }
 
   private async fetchWrapper<T>(
     endpoint: string,
-    options: RequestInit
+    options: FetchOptions
   ): Promise<T> {
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json'
@@ -90,11 +98,12 @@ export class APIClient {
       ...defaultHeaders,
       ...(options.headers as Record<string, string> || {})
     };
+const response = await fetch(`${BASE_URL}${endpoint}`, {
+  ...options,
+  headers,
+  signal: options.signal // ✅ explicitly pass signal here
+});
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      ...options,
-      headers
-    });
 
     if (!response.ok) {
       const error = await this.parseError(response);
