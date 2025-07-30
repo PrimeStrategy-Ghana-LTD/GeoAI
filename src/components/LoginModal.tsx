@@ -87,9 +87,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           </div>
 
-          {/* Right Side - Form */}
+          
           <div className="w-full md:w-1/2 p-8 relative">
-            {/* Header */}
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-white mb-1">Log In</h2>
               <p className="text-gray-400 text-sm">
@@ -97,7 +96,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </p>
             </div>
 
-            {/* Tabs */}
+          
             <div className="flex border-b border-gray-700 mb-6">
               <button
                 className={`flex-1 py-2 font-medium text-sm ${activeTab === 'email' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
@@ -113,7 +112,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </button>
             </div>
 
-            {/* Error Message */}
+        
             {error && (
               <div className="mb-4 p-3 bg-red-900/50 text-red-300 text-sm rounded-md">
                 {error}
@@ -122,7 +121,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
             {activeTab === 'email' ? (
               <>
-                {/* Email Form */}
+           
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="login-email" className="block text-sm font-medium text-gray-300 mb-1">
@@ -196,7 +195,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 </div>
               </>
             ) : (
-              /* Social Login Tab */
+              
               <div className="space-y-4">
                 <Button
                   variant="outline"
@@ -231,7 +230,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             )}
 
-            {/* Switch to Signup */}
+            
             <div className="mt-6 text-center text-sm text-gray-400">
               Don't have an account?{' '}
               <button

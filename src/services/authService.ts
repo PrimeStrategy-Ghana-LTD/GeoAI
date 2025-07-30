@@ -9,13 +9,13 @@ interface AuthResponse {
   };
 }
 
-// ✅ LOGIN: Sends correct credentials
+
 export async function loginUser(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email, // Backend expects "email"
+      email, 
       password,
     }),
   });
@@ -32,7 +32,6 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
   return data;
 }
 
-// ✅ SIGNUP: Sends "name" (NOT "full_name")
 export async function signupUser(email: string, password: string, name: string): Promise<AuthResponse> {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
@@ -40,7 +39,7 @@ export async function signupUser(email: string, password: string, name: string):
     body: JSON.stringify({
       email,
       password,
-      name, // Use "name" as expected by backend
+      name, 
     }),
   });
 
@@ -56,7 +55,6 @@ export async function signupUser(email: string, password: string, name: string):
   return data;
 }
 
-// ✅ TOKEN VALIDATION: Verifies user session token
 export async function validateToken(token: string): Promise<boolean> {
   try {
     const res = await fetch(`${BASE_URL}/auth/validate`, {
