@@ -113,23 +113,12 @@ const AppLayout: React.FC<{}> = () => {
       conversationManager.setActiveConversation(activeChat);
     }
 
-    await conversationManager.addUserMessage(userText);
-    const currentConvo = conversationManager.getCurrentConversation();
-    
-    if (!currentConvo) {
-      throw new Error('No active conversation found');
-    }
+   const aiResponse = await conversationManager.addUserMessage(userText);
+setMessages(prev => [
+  ...prev,
+  { role: 'ai' as const, text: aiResponse.content }
+]);
 
-    const aiResponse = currentConvo.messages.find(m => m.role === 'assistant');
-    if (aiResponse) {
-      setMessages(prev => [
-        ...prev, 
-        { 
-          role: 'ai' as const, 
-          text: aiResponse.content 
-        }
-      ]);
-    }
 
   
     if (!isLoggedIn) {
