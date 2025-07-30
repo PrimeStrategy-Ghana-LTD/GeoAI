@@ -89,44 +89,32 @@ const AppLayout: React.FC<{}> = () => {
     }
   };
 
- const handleSendMessage = async () => {
-  const userText = inputValue.trim();
+ const handleSendMessage = async (userTextParam?: string) => {
+  const userText = (userTextParam || inputValue).trim();
   if (!userText) return;
 
   setIsLoading(true);
-
   setMessages(prev => [...prev, { role: 'user' as const, text: userText }]);
   setInputValue('');
 
   try {
-    
     if (!activeChat) {
-    
       const newConvo = conversationManager.startNewConversation(userText);
-      if (!newConvo) {
-        throw new Error('Failed to create new conversation');
-      }
+      if (!newConvo) throw new Error('Failed to create new conversation');
       setActiveChat(newConvo.id);
       conversationManager.setActiveConversation(newConvo.id);
     } else {
-    
       conversationManager.setActiveConversation(activeChat);
     }
 
-   const aiResponse = await conversationManager.addUserMessage(userText);
-setMessages(prev => [
-  ...prev,
-  { role: 'ai' as const, text: aiResponse.content }
-]);
+    const aiResponse = await conversationManager.addUserMessage(userText);
+    setMessages(prev => [...prev, { role: 'ai' as const, text: aiResponse.content }]);
 
-
-  
     if (!isLoggedIn) {
       setSearchCount(prev => prev + 1);
     }
   } catch (error) {
     console.error('Message processing error:', error);
-
   } finally {
     setIsLoading(false);
     setCurrentView('chat');
@@ -136,8 +124,9 @@ setMessages(prev => [
 
 const handleBubbleClick = (text: string) => {
   setInputValue(text);
-  setTimeout(handleSendMessage, 50);
+  setTimeout(() => handleSendMessage(text), 50);
 };
+
   
   const renderAuthDropdown = () => (
     isLoggedIn ? (
