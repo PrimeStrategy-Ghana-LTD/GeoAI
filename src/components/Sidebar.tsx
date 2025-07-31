@@ -4,7 +4,7 @@ import {
   Search,
   MessageSquare,
   ChevronRight,
-  Star,
+  Pin,
   History,
   Loader2
 } from 'lucide-react';
@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {!isCollapsed && pinnedChats.length > 0 && (
           <>
             <div className="text-xs text-gray-400 px-2 mb-2 flex items-center">
-              <Star className="w-3 h-3 mr-1" />
+              <Pin className="w-3 h-3 mr-1" />
               Pinned
             </div>
             {pinnedChats.map((chat) => (
@@ -250,7 +250,7 @@ const ChatRow = ({
         className="p-1 text-gray-400 hover:text-yellow-400"
         title={pinned ? 'Unpin' : 'Pin'}
       >
-        <Star className="w-3 h-3" />
+        <Pin className="w-3 h-3" />
       </button>
       <button
         onClick={(e) => {
