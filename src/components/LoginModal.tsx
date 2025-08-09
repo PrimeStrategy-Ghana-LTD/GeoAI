@@ -53,7 +53,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
       const backendUrl = 'https://nomar.up.railway.app';
       const authUrl = `${backendUrl}/auth/${provider}`;
       
-      // Store current path for redirect after login
       sessionStorage.setItem('preAuthRoute', window.location.pathname);
       window.location.href = authUrl;
     } catch (err) {
@@ -174,7 +173,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <Button
                     variant="outline"
-                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700 min-h-[40px]"
+                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
                     onClick={() => handleSocialLogin('google')}
                     disabled={!!socialLoading}
                   >
@@ -196,7 +195,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700 min-h-[40px]"
+                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
                     onClick={() => handleSocialLogin('microsoft')}
                     disabled={!!socialLoading}
                   >
@@ -208,7 +207,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700 min-h-[40px]"
+                    className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
                     onClick={() => handleSocialLogin('apple')}
                     disabled={!!socialLoading}
                   >
