@@ -26,6 +26,7 @@ const AppLayout: React.FC<{}> = () => {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [userInitial, setUserInitial] = useState<string>('U');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -198,16 +199,31 @@ const AppLayout: React.FC<{}> = () => {
     setTimeout(() => handleSendMessage(text), 50);
   };
 
-  const renderAuthDropdown = () => (
-    isLoggedIn ? (
-      <div className="relative group">
-        <button className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors">
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
-            {userInitial}
-          </div>
-          <ChevronDown size={14} />
-        </button>
-        <div className="absolute right-0 mt-2 w-32 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+ const renderAuthDropdown = () => {
+  // Add the click-outside handler effect
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showDropdown && !(e.target as Element).closest('.relative')) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
+
+  return isLoggedIn ? (
+    <div className="relative">
+      <button 
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+      >
+        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
+          {userInitial}
+        </div>
+        <ChevronDown size={14} />
+      </button>
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 w-32 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md z-50">
           <button
             onClick={() => {
               localStorage.removeItem('access_token');
@@ -215,30 +231,32 @@ const AppLayout: React.FC<{}> = () => {
               setMessages([]);
               setCurrentView('home');
               setUserInitial('U');
+              setShowDropdown(false);
             }}
             className="w-full text-left px-4 py-2 text-sm hover:bg-[#3b3c44] transition-colors"
           >
             Logout
           </button>
         </div>
-      </div>
-    ) : (
-      <div className="flex gap-4">
-        <button
-          onClick={() => setShowLoginModal(true)}
-          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
-        >
-          Login
-        </button>
-        <button
-          onClick={() => setShowSignupModal(true)}
-          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
-        >
-          Sign Up
-        </button>
-      </div>
-    )
+      )}
+    </div>
+  ) : (
+    <div className="flex gap-4">
+      <button
+        onClick={() => setShowLoginModal(true)}
+        className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
+      >
+        Login
+      </button>
+      <button
+        onClick={() => setShowSignupModal(true)}
+        className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
+      >
+        Sign Up
+      </button>
+    </div>
   );
+};
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
@@ -283,43 +301,43 @@ const AppLayout: React.FC<{}> = () => {
               ) : (
                 <>
                   <p className="text-sm/relaxed">{msg.text}</p>
-               <div className={`absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end`}>
-  {/* For AI messages: Regenerate + Copy */}
+               <div className={`absolute right-2 bottom-2 flex gap-2 justify-end`}>
+  {/* For AI messages: Regenerate + Copy (always visible) */}
   {msg.role === 'ai' && (
     <>
       <button 
         onClick={() => regenerateResponse(idx)}
-        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors border border-gray-600"
         title="Regenerate"
       >
-        <RefreshCw className="h-3 w-3" />
+        <RefreshCw className="h-4 w-4 text-blue-400" />
       </button>
       <button 
         onClick={() => copyToClipboard(msg.text)}
-        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors border border-gray-600"
         title="Copy"
       >
-        <Copy className="h-3 w-3" />
+        <Copy className="h-4 w-4 text-blue-400" />
       </button>
     </>
   )}
   
-  {/* For user messages: Edit + Copy */}
+  {/* For user messages: Edit + Copy (always visible) */}
   {msg.role === 'user' && (
     <>
       <button 
         onClick={() => setInputValue(msg.text)}
-        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors border border-gray-600"
         title="Edit"
       >
-        <Edit3 className="h-3 w-3" />
+        <Edit3 className="h-4 w-4 text-blue-400" />
       </button>
       <button 
         onClick={() => copyToClipboard(msg.text)}
-        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors border border-gray-600"
         title="Copy"
       >
-        <Copy className="h-3 w-3" />
+        <Copy className="h-4 w-4 text-blue-400" />
       </button>
     </>
   )}
