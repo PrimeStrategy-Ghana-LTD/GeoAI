@@ -268,11 +268,10 @@ const AppLayout: React.FC<{}> = () => {
    {messages.map((msg, idx) => (
   <div
     key={idx}
-    className={`group flex max-w-3xl mx-auto gap-3 ${
+    className={`flex max-w-3xl mx-auto gap-3 ${
       msg.role === 'user' ? 'justify-end' : 'justify-start'
     }`}
   >
-    {/* AI icon (only for AI messages) */}
     {msg.role === 'ai' && (
       <div className="flex-shrink-0 mt-1">
         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -285,8 +284,7 @@ const AppLayout: React.FC<{}> = () => {
       </div>
     )}
 
-    {/* Main message container */}
-    <div className={`flex ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} gap-2`}>
+    <div className="flex flex-col gap-1">
       {/* Message bubble */}
       <div className={`rounded-xl p-4 ${
         msg.role === 'user'
@@ -307,32 +305,34 @@ const AppLayout: React.FC<{}> = () => {
         )}
       </div>
 
-      {/* Action buttons (now outside bubble) */}
+      {/* Action buttons - always visible below bubble */}
       {!msg.isLoading && (
-        <div className="flex flex-col gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className={`flex gap-2 justify-${
+          msg.role === 'user' ? 'end' : 'start'
+        } px-1`}>
           {msg.role === 'ai' && (
             <button 
               onClick={() => regenerateResponse(idx)}
-              className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+              className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
               title="Regenerate"
             >
-              <RefreshCw className="h-4 w-4 text-blue-400" />
+              <RefreshCw className="h-3 w-3 text-blue-400" />
             </button>
           )}
           <button 
             onClick={() => copyToClipboard(msg.text)}
-            className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+            className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
             title="Copy"
           >
-            <Copy className="h-4 w-4 text-blue-400" />
+            <Copy className="h-3 w-3 text-blue-400" />
           </button>
           {msg.role === 'user' && (
             <button 
               onClick={() => setInputValue(msg.text)}
-              className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+              className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
               title="Edit"
             >
-              <Edit3 className="h-4 w-4 text-blue-400" />
+              <Edit3 className="h-3 w-3 text-blue-400" />
             </button>
           )}
         </div>
