@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare, RefreshCw } from 'lucide-react';
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -24,7 +24,17 @@ const AppLayout: React.FC<{}> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMicActive, setIsMicActive] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [userInitial, setUserInitial] = useState<string>('U'); // Added for avatar initial
+  const [userInitial, setUserInitial] = useState<string>('U');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Check auth status on mount
   useEffect(() => {
@@ -41,6 +51,36 @@ const AppLayout: React.FC<{}> = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const regenerateResponse = async (messageIndex: number) => {
+    if (messageIndex <= 0) return;
+    
+    const userMessage = messages[messageIndex - 1].text;
+    setIsLoading(true);
+    
+    setMessages(prev => [...prev.slice(0, messageIndex), 
+      { role: 'ai', text: '', isLoading: true }
+    ]);
+
+    try {
+      const aiResponse = await conversationManager.addUserMessage(userMessage);
+      
+      setMessages(prev => {
+        const updated = [...prev.slice(0, messageIndex)];
+        updated[messageIndex] = { 
+          role: 'ai', 
+          text: aiResponse.content,
+          isLoading: false
+        };
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+      setMessages(prev => [...prev.slice(0, messageIndex)]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVoiceInput = () => {
@@ -68,7 +108,7 @@ const AppLayout: React.FC<{}> = () => {
       localStorage.setItem('access_token', data.access_token);
       setIsLoggedIn(true);
       setShowLoginModal(false);
-      setUserInitial(email.charAt(0).toUpperCase()); // Capture first letter of email
+      setUserInitial(email.charAt(0).toUpperCase());
     } catch (err: any) {
       alert(err.message);
     }
@@ -80,7 +120,7 @@ const AppLayout: React.FC<{}> = () => {
       localStorage.setItem('access_token', data.access_token);
       setIsLoggedIn(true);
       setShowSignupModal(false);
-      setUserInitial(name.charAt(0).toUpperCase()); // Capture first letter of name
+      setUserInitial(name.charAt(0).toUpperCase());
     } catch (err: any) {
       alert(err.message);
     }
@@ -219,7 +259,7 @@ const AppLayout: React.FC<{}> = () => {
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                   <img 
                     src="/images/Vector-star.png" 
-                    className="h-3 w-3 brightness-125" 
+                    className="h-3 w-3 brightness-2" 
                     alt="AI" 
                   />
                 </div>
@@ -243,29 +283,53 @@ const AppLayout: React.FC<{}> = () => {
               ) : (
                 <>
                   <p className="text-sm/relaxed">{msg.text}</p>
-                  <div className="absolute right-2 -top-2 flex gap-1">
-                    {msg.role === 'user' && (
-                      <button 
-                        onClick={() => setInputValue(msg.text)}
-                        className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 className="h-3 w-3" />
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => copyToClipboard(msg.text)}
-                      className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
-                      title="Copy"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                  </div>
+               <div className={`absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end`}>
+  {/* For AI messages: Regenerate + Copy */}
+  {msg.role === 'ai' && (
+    <>
+      <button 
+        onClick={() => regenerateResponse(idx)}
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        title="Regenerate"
+      >
+        <RefreshCw className="h-3 w-3" />
+      </button>
+      <button 
+        onClick={() => copyToClipboard(msg.text)}
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        title="Copy"
+      >
+        <Copy className="h-3 w-3" />
+      </button>
+    </>
+  )}
+  
+  {/* For user messages: Edit + Copy */}
+  {msg.role === 'user' && (
+    <>
+      <button 
+        onClick={() => setInputValue(msg.text)}
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        title="Edit"
+      >
+        <Edit3 className="h-3 w-3" />
+      </button>
+      <button 
+        onClick={() => copyToClipboard(msg.text)}
+        className="p-1.5 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] transition-colors"
+        title="Copy"
+      >
+        <Copy className="h-3 w-3" />
+      </button>
+    </>
+  )}
+</div>
                 </>
               )}
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {isLoading && (
@@ -396,7 +460,7 @@ const AppLayout: React.FC<{}> = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 max-w-md w-full mb-10">
-                {['Buy land in Kumasi', 'Land disputes in Spintex', 'Freehold land types', 'How to verify land'].map((sug) => (
+                {['land ownership types', 'Land disputes in Spintex', 'freehold land types', 'How to verify land'].map((sug) => (
                   <button
                     key={sug}
                     onClick={() => handleBubbleClick(sug)}

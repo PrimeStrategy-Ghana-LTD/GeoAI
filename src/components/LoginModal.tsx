@@ -46,7 +46,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   const handleSocialLogin = (provider: 'google' | 'microsoft' | 'apple') => {
-    // Replace with your actual OAuth endpoints
     const authUrls = {
       google: 'https://nomar.up.railway.app/auth/google',
       microsoft: 'https://nomar.up.railway.app/auth/microsoft',

@@ -50,9 +50,11 @@ class ConversationManager {
   }
 
   public startNewConversation(userMessage: string): Conversation {
+    const title = userMessage.trim().substring(0, 50) || 'New Conversation';
+
     const newConversation: Conversation = {
       id: uuidv4(),
-      title: userMessage.substring(0, 50) || 'New Conversation',
+      title,
       isPinned: false,
       messages: [],
       createdAt: new Date(),
@@ -62,8 +64,18 @@ class ConversationManager {
     this.conversations.unshift(newConversation);
     this.currentConversationId = newConversation.id;
     this.persistConversations();
+    window.dispatchEvent(new Event('chatListUpdated'));
 
     return newConversation;
+  }
+
+  public renameConversation(id: string, newTitle: string): void {
+    const conversation = this.conversations.find(c => c.id === id);
+    if (conversation) {
+      conversation.title = newTitle.trim().substring(0, 50) || 'Untitled';
+      this.persistConversations();
+      window.dispatchEvent(new Event('chatListUpdated'));
+    }
   }
 
   public async addUserMessage(
@@ -84,7 +96,14 @@ class ConversationManager {
 
     conversation.messages.push(userMessage);
     conversation.lastActive = new Date();
+
+    // Rename conversation title if it's still default
+    if (conversation.title === 'New Conversation' && content.trim()) {
+      this.renameConversation(conversation.id, content);
+    }
+
     this.persistConversations();
+    window.dispatchEvent(new Event('chatListUpdated'));
 
     return this.getAIResponse(conversation, options?.abortSignal);
   }
@@ -110,6 +129,7 @@ class ConversationManager {
       conversation.messages.push(aiMessage);
       conversation.lastActive = new Date();
       this.persistConversations();
+      window.dispatchEvent(new Event('chatListUpdated'));
 
       return aiMessage;
     } catch (error) {
@@ -156,6 +176,7 @@ class ConversationManager {
       this.currentConversationId = null;
     }
     this.persistConversations();
+    window.dispatchEvent(new Event('chatListUpdated'));
   }
 
   public togglePin(id: string): void {
@@ -163,6 +184,7 @@ class ConversationManager {
     if (convo) {
       convo.isPinned = !convo.isPinned;
       this.persistConversations();
+      window.dispatchEvent(new Event('chatListUpdated'));
     }
   }
 }

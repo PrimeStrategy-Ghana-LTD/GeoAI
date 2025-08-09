@@ -69,8 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={`h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
-      
-      {/* Collapse Button */}
+
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="absolute -right-3 top-1/2 z-10 bg-gray-700 border border-gray-600 rounded-full p-1 hover:bg-gray-600"
@@ -78,7 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Header */}
       <div className="p-4 border-b border-gray-700">
         {!isCollapsed ? (
           <>
@@ -123,7 +121,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Search */}
       {!isCollapsed && (
         <div className="p-3 border-b border-gray-700">
           <div className="relative">
@@ -138,7 +135,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-2 py-3">
         {!isCollapsed && pinnedChats.length > 0 && (
           <>
@@ -197,7 +193,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Footer */}
       <div className="p-3 border-t border-gray-700 text-xs text-gray-500">
         {!isCollapsed ? (
           <>
@@ -212,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
 };
 
-// ChatRow: Shared row for pinned & unpinned chats
+
 const ChatRow = ({
   chat,
   isActive,
