@@ -471,7 +471,7 @@ const AppLayout: React.FC<{}> = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2 max-w-md w-full mb-10">
-                {['land ownership types', 'Land disputes in Spintex', 'freehold land types', 'How to verify land'].map((sug) => (
+                {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((sug) => (
                   <button
                     key={sug}
                     onClick={() => handleBubbleClick(sug)}
