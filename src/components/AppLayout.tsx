@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare, RefreshCw } from 'lucide-react';
+import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw } from 'lucide-react';
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -26,7 +30,7 @@ const AppLayout: React.FC<{}> = () => {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [userInitial, setUserInitial] = useState<string>('U');
   const [showDropdown, setShowDropdown] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Function to refresh the page
@@ -38,7 +42,7 @@ const AppLayout: React.FC<{}> = () => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(!!token);
-    
+
     if (!token) {
       const stored = localStorage.getItem('searchCount');
       setSearchCount(stored ? parseInt(stored, 10) : 0);
@@ -88,17 +92,17 @@ const AppLayout: React.FC<{}> = () => {
 
   const regenerateResponse = async (messageIndex: number) => {
     if (messageIndex <= 0) return;
-    
+
     const userMessage = messages[messageIndex - 1].text;
     setIsLoading(true);
-    
+
     setMessages(prev => [...prev.slice(0, messageIndex),
       { role: 'ai', text: '', isLoading: true }
     ]);
-    
+
     try {
       const aiResponse = await conversationManager.addUserMessage(userMessage);
-      
+
       setMessages(prev => {
         const updated = [...prev.slice(0, messageIndex)];
         updated[messageIndex] = {
@@ -121,7 +125,7 @@ const AppLayout: React.FC<{}> = () => {
       alert('Voice input is not supported in your browser');
       return;
     }
-    
+
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -172,13 +176,13 @@ const AppLayout: React.FC<{}> = () => {
     setCurrentView('chat');
     const controller = new AbortController();
     setAbortController(controller);
-    
+
     setMessages(prev => [...prev,
       { role: 'user', text: userText },
       { role: 'ai', text: '', isLoading: true }
     ]);
     setInputValue('');
-    
+
     if (!isLoggedIn) {
       setSearchCount(prev => prev + 1);
     }
@@ -192,11 +196,11 @@ const AppLayout: React.FC<{}> = () => {
       } else {
         conversationManager.setActiveConversation(activeChat);
       }
-      
+
       const aiResponse = await conversationManager.addUserMessage(userText, {
         abortSignal: controller.signal
       });
-      
+
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = {
@@ -299,22 +303,22 @@ const AppLayout: React.FC<{}> = () => {
           >
             {msg.role === 'ai' && (
               <div className="flex-shrink-0 mt-1">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                  <img
-                    src="/images/Vector-star.png"
-                    className="h-3 w-3 brightness-2"
-                    alt="AI"
-                  />
-                </div>
+                <img
+                  src="/images/Vector-star.png"
+                  className="h-4 w-4"
+                  alt="AI"
+                />
               </div>
             )}
+
             <div className="flex flex-col gap-1">
-              {/* Message bubble */}
-              <div className={`rounded-xl p-4 ${
-                msg.role === 'user'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                  : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
-              }`}>
+              <div
+                className={`rounded-xl p-4 ${
+                  msg.role === 'user'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                    : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
+                }`}
+              >
                 {msg.isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="flex space-x-1">
@@ -325,14 +329,20 @@ const AppLayout: React.FC<{}> = () => {
                     <span className="text-xs text-gray-400">Generating...</span>
                   </div>
                 ) : (
-                  <p className="text-sm/relaxed">{msg.text}</p>
+                  <div className="prose prose-invert text-sm/relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
-              {/* Action buttons - always visible below bubble */}
+
               {!msg.isLoading && (
-                <div className={`flex gap-2 justify-${
-                  msg.role === 'user' ? 'end' : 'start'
-                } px-1`}>
+                <div
+                  className={`flex gap-2 justify-${
+                    msg.role === 'user' ? 'end' : 'start'
+                  } px-1`}
+                >
                   {msg.role === 'ai' && (
                     <button
                       onClick={() => regenerateResponse(idx)}
@@ -365,6 +375,7 @@ const AppLayout: React.FC<{}> = () => {
         ))}
         <div ref={messagesEndRef} />
       </div>
+
       {isLoading && (
         <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
           <div className="flex space-x-1">
@@ -384,6 +395,7 @@ const AppLayout: React.FC<{}> = () => {
           </button>
         </div>
       )}
+
       <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
@@ -421,6 +433,7 @@ const AppLayout: React.FC<{}> = () => {
     <div className="flex h-screen bg-[#1e1f24] text-white">
       {currentView === 'chat' && (
         <Sidebar
+          isLoading={isLoading}  
           activeChat={activeChat}
           onNewChat={() => {
             const newConvo = conversationManager.startNewConversation('');
@@ -444,6 +457,7 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
+
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? (
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
@@ -452,11 +466,10 @@ const AppLayout: React.FC<{}> = () => {
                 className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={refreshPage}
               >
-                {/* Enhanced logo with better sizing */}
-                <img 
-                  src="/images/lANDAilogo2.png" 
-                  alt="LANDAi Logo" 
-                  className="h-20 w-auto max-w-xs" 
+                <img
+                  src="/images/lANDAilogo2.png"
+                  alt="LANDAi Logo"
+                  className="h-12 w-auto max-w-xs"
                   style={{ maxHeight: '60px' }}
                 />
               </div>
@@ -464,21 +477,20 @@ const AppLayout: React.FC<{}> = () => {
             </header>
 
             <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
-              {/* mobile view  */}
               <div className="md:hidden mb-6">
-                <img 
-                  src="/images/lANDAilogo2.png" 
-                  alt="LANDAi Logo" 
-                  className="h-16 w-auto mx-auto" 
+                <img
+                  src="/images/lANDAilogo.png"
+                  alt="LANDAi Logo"
+                  className="h-16 w-auto mx-auto"
                   onClick={refreshPage}
                 />
               </div>
-              
+
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
                 Get all you need<br />about your desired land
               </h1>
               <p className="text-gray-300 text-lg mb-8 text-center">How can I help you today?</p>
-             
+
               <div className="relative w-full max-w-md mb-8">
                 <input
                   value={inputValue}
@@ -503,6 +515,7 @@ const AppLayout: React.FC<{}> = () => {
                   )}
                 </button>
               </div>
+
               <div className="grid grid-cols-2 gap-2 max-w-md w-full mb-10">
                 {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((sug) => (
                   <button
@@ -515,6 +528,7 @@ const AppLayout: React.FC<{}> = () => {
                   </button>
                 ))}
               </div>
+
               {!isLoggedIn && (
                 <div className="text-center text-sm text-gray-400 mb-8">
                   {searchCount < 3 ? (
@@ -530,7 +544,7 @@ const AppLayout: React.FC<{}> = () => {
           renderChatContent()
         )}
       </div>
-      
+
       {showSearchPopup && (
         <SearchChatsInterface
           onClose={() => setShowSearchPopup(false)}
@@ -548,6 +562,7 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
+
       {showLoginModal && (
         <LoginModal
           onClose={() => setShowLoginModal(false)}
@@ -562,6 +577,7 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
+
       {showSignupModal && (
         <SignupModal
           onClose={() => setShowSignupModal(false)}
