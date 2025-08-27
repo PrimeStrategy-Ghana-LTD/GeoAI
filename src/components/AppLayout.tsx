@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare, RefreshCw } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -27,6 +29,17 @@ const AppLayout: React.FC<{}> = () => {
   const [userInitial, setUserInitial] = useState<string>('U');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // Add the click-outside handler effect for dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showDropdown && !(e.target as Element).closest('.relative')) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -60,17 +73,16 @@ const AppLayout: React.FC<{}> = () => {
     const userMessage = messages[messageIndex - 1].text;
     setIsLoading(true);
     
-    setMessages(prev => [...prev.slice(0, messageIndex), 
+    setMessages(prev => [...prev.slice(0, messageIndex),
       { role: 'ai', text: '', isLoading: true }
     ]);
-
     try {
       const aiResponse = await conversationManager.addUserMessage(userMessage);
       
       setMessages(prev => {
         const updated = [...prev.slice(0, messageIndex)];
-        updated[messageIndex] = { 
-          role: 'ai', 
+        updated[messageIndex] = {
+          role: 'ai',
           text: aiResponse.content,
           isLoading: false
         };
@@ -89,7 +101,6 @@ const AppLayout: React.FC<{}> = () => {
       alert('Voice input is not supported in your browser');
       return;
     }
-
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -130,18 +141,16 @@ const AppLayout: React.FC<{}> = () => {
   const handleSendMessage = async (userTextParam?: string) => {
     const userText = (userTextParam || inputValue).trim();
     if (!userText) return;
-
     setIsLoading(true);
-    setCurrentView('chat'); 
+    setCurrentView('chat');
     const controller = new AbortController();
     setAbortController(controller);
     
-    setMessages(prev => [...prev, 
+    setMessages(prev => [...prev,
       { role: 'user', text: userText },
       { role: 'ai', text: '', isLoading: true }
     ]);
     setInputValue('');
-
     try {
       if (!activeChat) {
         const newConvo = conversationManager.startNewConversation(userText);
@@ -151,21 +160,19 @@ const AppLayout: React.FC<{}> = () => {
       } else {
         conversationManager.setActiveConversation(activeChat);
       }
-
       const aiResponse = await conversationManager.addUserMessage(userText, {
         abortSignal: controller.signal
       });
       
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { 
-          role: 'ai', 
+        updated[updated.length - 1] = {
+          role: 'ai',
           text: aiResponse.content,
           isLoading: false
         };
         return updated;
       });
-
       if (!isLoggedIn) {
         setSearchCount(prev => prev + 1);
       }
@@ -199,202 +206,189 @@ const AppLayout: React.FC<{}> = () => {
     setTimeout(() => handleSendMessage(text), 50);
   };
 
- const renderAuthDropdown = () => {
-  // Add the click-outside handler effect
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showDropdown && !(e.target as Element).closest('.relative')) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showDropdown]);
-
-  return isLoggedIn ? (
-    <div className="relative">
-      <button 
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-      >
-        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
-          {userInitial}
-        </div>
-        <ChevronDown size={14} />
-      </button>
-      {showDropdown && (
-        <div className="absolute right-0 mt-2 w-32 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md z-50">
-          <button
-            onClick={() => {
-              localStorage.removeItem('access_token');
-              setIsLoggedIn(false);
-              setMessages([]);
-              setCurrentView('home');
-              setUserInitial('U');
-              setShowDropdown(false);
-            }}
-            className="w-full text-left px-4 py-2 text-sm hover:bg-[#3b3c44] transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      )}
-    </div>
-  ) : (
-    <div className="flex gap-4">
-      <button
-        onClick={() => setShowLoginModal(true)}
-        className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
-      >
-        Login
-      </button>
-      <button
-        onClick={() => setShowSignupModal(true)}
-        className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
-      >
-        Sign Up
-      </button>
-    </div>
-  );
-};
-
-  const renderChatContent = () => (
-  <div className="flex flex-col h-full bg-[#1e1f24]">
-    <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
-      {renderAuthDropdown()}
-    </div>
-
-    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-   {messages.map((msg, idx) => (
-  <div
-    key={idx}
-    className={`flex max-w-3xl mx-auto gap-3 ${
-      msg.role === 'user' ? 'justify-end' : 'justify-start'
-    }`}
-  >
-    {msg.role === 'ai' && (
-      <div className="flex-shrink-0 mt-1">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-          <img 
-            src="/images/Vector-star.png" 
-            className="h-3 w-3 brightness-2" 
-            alt="AI" 
-          />
-        </div>
-      </div>
-    )}
-
-    <div className="flex flex-col gap-1">
-      {/* Message bubble */}
-      <div className={`rounded-xl p-4 ${
-        msg.role === 'user'
-          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-          : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
-      }`}>
-        {msg.isLoading ? (
-          <div className="flex items-center gap-2">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
-            <span className="text-xs text-gray-400">Generating...</span>
+  const renderAuthDropdown = () => {
+    return isLoggedIn ? (
+      <div className="relative">
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
+            {userInitial}
           </div>
-        ) : (
-          <p className="text-sm/relaxed">{msg.text}</p>
+          <ChevronDown size={14} />
+        </button>
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-32 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md z-50">
+            <button
+              onClick={() => {
+                localStorage.removeItem('access_token');
+                setIsLoggedIn(false);
+                setMessages([]);
+                setCurrentView('home');
+                setUserInitial('U');
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-[#3b3c44] transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         )}
       </div>
-
-      {/* Action buttons - always visible below bubble */}
-      {!msg.isLoading && (
-        <div className={`flex gap-2 justify-${
-          msg.role === 'user' ? 'end' : 'start'
-        } px-1`}>
-          {msg.role === 'ai' && (
-            <button 
-              onClick={() => regenerateResponse(idx)}
-              className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
-              title="Regenerate"
-            >
-              <RefreshCw className="h-3 w-3 text-blue-400" />
-            </button>
-          )}
-          <button 
-            onClick={() => copyToClipboard(msg.text)}
-            className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
-            title="Copy"
-          >
-            <Copy className="h-3 w-3 text-blue-400" />
-          </button>
-          {msg.role === 'user' && (
-            <button 
-              onClick={() => setInputValue(msg.text)}
-              className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
-              title="Edit"
-            >
-              <Edit3 className="h-3 w-3 text-blue-400" />
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  </div>
-))}
-<div ref={messagesEndRef} />
-    </div>
-
-    {isLoading && (
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
-        <div className="flex space-x-1">
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-        </div>
-        <span className="text-sm text-white">Generating response</span>
-        <button 
-          onClick={handleStopGeneration}
-          className="ml-2 text-xs text-red-400 hover:text-red-300 flex items-center"
+    ) : (
+      <div className="flex gap-4">
+        <button
+          onClick={() => setShowLoginModal(true)}
+          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
         >
-          <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Stop
+          Login
+        </button>
+        <button
+          onClick={() => setShowSignupModal(true)}
+          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
+        >
+          Sign Up
         </button>
       </div>
-    )}
+    );
+  };
 
-    <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
-      <div className="relative max-w-3xl mx-auto">
-        <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
-          <img
-            src="/images/Vector-star.png"
-            alt=""
-            className="h-4 w-4 mr-3 brightness-125"
-          />
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
-            placeholder="Ask a follow-up..."
-            disabled={!isLoggedIn && searchCount >= 3}
-          />
-          <button
-            onClick={handleVoiceInput}
-            disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
-            className={`ml-3 transition-all ${isMicActive ? 'animate-pulse text-red-400' : 'text-blue-400 hover:text-blue-300'}`}
+  const renderChatContent = () => (
+    <div className="flex flex-col h-full bg-[#1e1f24]">
+      <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
+        {renderAuthDropdown()}
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`flex max-w-3xl mx-auto gap-3 ${
+              msg.role === 'user' ? 'justify-end' : 'justify-start'
+            }`}
           >
-            {isMicActive ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
+          {msg.role === 'ai' && (
+  <div className="flex-shrink-0 mt-1">
+    <img
+      src="/images/Vector-star.png"
+      className="h-4 w-4"
+      alt="AI"
+    />
+  </div>
+)}
+            <div className="flex flex-col gap-1">
+              {/* Message bubble */}
+              <div className={`rounded-xl p-4 ${
+                msg.role === 'user'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                  : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
+              }`}>
+                {msg.isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-xs text-gray-400">Generating...</span>
+                  </div>
+                ) : (
+                  <div className="prose prose-invert text-sm/relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons - always visible below bubble */}
+              {!msg.isLoading && (
+                <div className={`flex gap-2 justify-${
+                  msg.role === 'user' ? 'end' : 'start'
+                } px-1`}>
+                  {msg.role === 'ai' && (
+                    <button
+                      onClick={() => regenerateResponse(idx)}
+                      className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+                      title="Regenerate"
+                    >
+                      <RefreshCw className="h-3 w-3 text-blue-400" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => copyToClipboard(msg.text)}
+                    className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+                    title="Copy"
+                  >
+                    <Copy className="h-3 w-3 text-blue-400" />
+                  </button>
+                  {msg.role === 'user' && (
+                    <button
+                      onClick={() => setInputValue(msg.text)}
+                      className="p-1 rounded-full bg-[#3b3c44] hover:bg-[#4c4d55] border border-gray-600"
+                      title="Edit"
+                    >
+                      <Edit3 className="h-3 w-3 text-blue-400" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      {isLoading && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <span className="text-sm text-white">Generating response</span>
+          <button
+            onClick={handleStopGeneration}
+            className="ml-2 text-xs text-red-400 hover:text-red-300 flex items-center"
+          >
+            <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Stop
           </button>
+        </div>
+      )}
+      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
+        <div className="relative max-w-3xl mx-auto">
+          <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
+            <img
+              src="/images/Vector-star.png"
+              alt=""
+              className="h-4 w-4 mr-3 brightness-125"
+            />
+            <input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
+              placeholder="Ask a follow-up..."
+              disabled={!isLoggedIn && searchCount >= 3}
+            />
+            <button
+              onClick={handleVoiceInput}
+              disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
+              className={`ml-3 transition-all ${isMicActive ? 'animate-pulse text-red-400' : 'text-blue-400 hover:text-blue-300'}`}
+            >
+              {isMicActive ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 
   return (
     <div className="flex h-screen bg-[#1e1f24] text-white">
@@ -424,7 +418,6 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
-
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? (
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
@@ -438,7 +431,6 @@ const AppLayout: React.FC<{}> = () => {
               </div>
               {renderAuthDropdown()}
             </header>
-
             <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
                 Get all you need<br />about your desired land
@@ -469,7 +461,6 @@ const AppLayout: React.FC<{}> = () => {
                   )}
                 </button>
               </div>
-
               <div className="grid grid-cols-2 gap-2 max-w-md w-full mb-10">
                 {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((sug) => (
                   <button
@@ -482,7 +473,6 @@ const AppLayout: React.FC<{}> = () => {
                   </button>
                 ))}
               </div>
-
               {!isLoggedIn && (
                 <div className="text-center text-sm text-gray-400 mb-8">
                   {searchCount < 3 ? (
@@ -498,7 +488,6 @@ const AppLayout: React.FC<{}> = () => {
           renderChatContent()
         )}
       </div>
-
       {showSearchPopup && (
         <SearchChatsInterface
           onClose={() => setShowSearchPopup(false)}
@@ -516,7 +505,6 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
-
       {showLoginModal && (
         <LoginModal
           onClose={() => setShowLoginModal(false)}
@@ -531,7 +519,6 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
-
       {showSignupModal && (
         <SignupModal
           onClose={() => setShowSignupModal(false)}
