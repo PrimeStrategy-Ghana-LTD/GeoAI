@@ -17,6 +17,7 @@ interface SidebarProps {
   onChatSelect: (chatId: string) => void;
   activeChat?: string | null;
   isLoading?: boolean;
+  isLoggedIn?: boolean; // 👈 add flag for login state
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -24,7 +25,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSearchChats,
   onChatSelect,
   activeChat,
-  isLoading = false
+  isLoading = false,
+  isLoggedIn = false // 👈 default false
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,11 +102,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="w-3 h-3 bg-blue-500 rounded-full group-hover:bg-blue-400 transition" />
-                  <span className="text-gray-300 group-hover:text-white text-sm font-semibold">
-                    NomaRoot
-                  </span>
-                </>
+                 <img
+                  src="/images/lANDAilogo2.png"
+                  alt="LANDAI Logo"
+                  className={`h-16 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80 mx-auto`}
+                   />
+                  </>
               )}
             </div>
 
@@ -155,70 +158,72 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        {!isCollapsed && pinnedChats.length > 0 && (
-          <>
-            <div className="text-xs text-gray-400 px-2 mb-2 flex items-center">
-              <Pin className="w-3 h-3 mr-1" />
-              Pinned
-            </div>
-            {pinnedChats.map((chat) => (
-              <ChatRow
-                key={chat.id}
-                chat={chat}
-                isActive={activeChat === chat.id}
-                onClick={() => onChatSelect(chat.id)}
-                onTogglePin={() => togglePin(chat.id)}
-                onDelete={() => deleteChat(chat.id)}
-                pinned
-              />
-            ))}
-          </>
-        )}
+      {/* Chat List (only if logged in) */}
+      {isLoggedIn && (
+        <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          {!isCollapsed && pinnedChats.length > 0 && (
+            <>
+              <div className="text-xs text-gray-400 px-2 mb-2 flex items-center">
+                <Pin className="w-3 h-3 mr-1" />
+                Pinned
+              </div>
+              {pinnedChats.map((chat) => (
+                <ChatRow
+                  key={chat.id}
+                  chat={chat}
+                  isActive={activeChat === chat.id}
+                  onClick={() => onChatSelect(chat.id)}
+                  onTogglePin={() => togglePin(chat.id)}
+                  onDelete={() => deleteChat(chat.id)}
+                  pinned
+                />
+              ))}
+            </>
+          )}
 
-        {!isCollapsed && unpinnedChats.length > 0 && (
-          <>
-            <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center">
-              <History className="w-3 h-3 mr-1" />
-              Recent
-            </div>
-            {unpinnedChats.map((chat) => (
-              <ChatRow
-                key={chat.id}
-                chat={chat}
-                isActive={activeChat === chat.id}
-                onClick={() => onChatSelect(chat.id)}
-                onTogglePin={() => togglePin(chat.id)}
-                onDelete={() => deleteChat(chat.id)}
-              />
-            ))}
-          </>
-        )}
+          {!isCollapsed && unpinnedChats.length > 0 && (
+            <>
+              <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center">
+                <History className="w-3 h-3 mr-1" />
+                Recent
+              </div>
+              {unpinnedChats.map((chat) => (
+                <ChatRow
+                  key={chat.id}
+                  chat={chat}
+                  isActive={activeChat === chat.id}
+                  onClick={() => onChatSelect(chat.id)}
+                  onTogglePin={() => togglePin(chat.id)}
+                  onDelete={() => deleteChat(chat.id)}
+                />
+              ))}
+            </>
+          )}
 
-        {isCollapsed && (
-          <div className="flex flex-col items-center gap-2">
-            {filteredChats.slice(0, 5).map((chat) => (
-              <button
-                key={chat.id}
-                className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-                  activeChat === chat.id ? 'bg-gray-700' : ''
-                }`}
-                onClick={() => onChatSelect(chat.id)}
-                title={chat.title}
-              >
-                <MessageSquare className="w-4 h-4 text-gray-400" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          {isCollapsed && (
+            <div className="flex flex-col items-center gap-2">
+              {filteredChats.slice(0, 5).map((chat) => (
+                <button
+                  key={chat.id}
+                  className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
+                    activeChat === chat.id ? 'bg-gray-700' : ''
+                  }`}
+                  onClick={() => onChatSelect(chat.id)}
+                  title={chat.title}
+                >
+                  <MessageSquare className="w-4 h-4 text-gray-400" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="p-3 border-t border-gray-700 text-xs text-gray-500">
         {!isCollapsed ? (
           <>
-            <p>© {new Date().getFullYear()} NomaRoot</p>
+            <p>© {new Date().getFullYear()} LANDAI</p>
             <p className="mt-1">Terms & Privacy</p>
           </>
         ) : (

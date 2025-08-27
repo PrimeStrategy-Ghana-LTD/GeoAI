@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Mic, ChevronDown, Copy, Edit3, Loader2, Plus, Search, MessageSquare, RefreshCw } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -27,8 +25,34 @@ const AppLayout: React.FC<{}> = () => {
   const [isMicActive, setIsMicActive] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [userInitial, setUserInitial] = useState<string>('U');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to refresh the page
+  const refreshPage = () => {
+    window.location.reload();
+  };
+
+  // Load counter on mount
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    setIsLoggedIn(!!token);
+    
+    if (!token) {
+      const stored = localStorage.getItem('searchCount');
+      setSearchCount(stored ? parseInt(stored, 10) : 0);
+    }
+  }, []);
+
+  // Persist counter changes
+  useEffect(() => {
+    if (!isLoggedIn) {
+      localStorage.setItem('searchCount', String(searchCount));
+    } else {
+      localStorage.removeItem('searchCount');
+    }
+  }, [searchCount, isLoggedIn]);
 
   // Add the click-outside handler effect for dropdown
   useEffect(() => {
@@ -37,6 +61,7 @@ const AppLayout: React.FC<{}> = () => {
         setShowDropdown(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDropdown]);
@@ -46,22 +71,16 @@ const AppLayout: React.FC<{}> = () => {
     scrollToBottom();
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Check auth status on mount
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    setIsLoggedIn(!!token);
-  }, []);
-
   // Home view event listener
   useEffect(() => {
     const handleGoToHome = () => setCurrentView('home');
     window.addEventListener('goToHome', handleGoToHome);
     return () => window.removeEventListener('goToHome', handleGoToHome);
   }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -76,6 +95,7 @@ const AppLayout: React.FC<{}> = () => {
     setMessages(prev => [...prev.slice(0, messageIndex),
       { role: 'ai', text: '', isLoading: true }
     ]);
+    
     try {
       const aiResponse = await conversationManager.addUserMessage(userMessage);
       
@@ -101,6 +121,7 @@ const AppLayout: React.FC<{}> = () => {
       alert('Voice input is not supported in your browser');
       return;
     }
+    
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -139,8 +160,14 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleSendMessage = async (userTextParam?: string) => {
+    if (!isLoggedIn && searchCount >= 3) {
+      setShowLoginModal(true);
+      return;
+    }
+
     const userText = (userTextParam || inputValue).trim();
     if (!userText) return;
+
     setIsLoading(true);
     setCurrentView('chat');
     const controller = new AbortController();
@@ -151,6 +178,11 @@ const AppLayout: React.FC<{}> = () => {
       { role: 'ai', text: '', isLoading: true }
     ]);
     setInputValue('');
+    
+    if (!isLoggedIn) {
+      setSearchCount(prev => prev + 1);
+    }
+
     try {
       if (!activeChat) {
         const newConvo = conversationManager.startNewConversation(userText);
@@ -160,6 +192,7 @@ const AppLayout: React.FC<{}> = () => {
       } else {
         conversationManager.setActiveConversation(activeChat);
       }
+      
       const aiResponse = await conversationManager.addUserMessage(userText, {
         abortSignal: controller.signal
       });
@@ -173,10 +206,7 @@ const AppLayout: React.FC<{}> = () => {
         };
         return updated;
       });
-      if (!isLoggedIn) {
-        setSearchCount(prev => prev + 1);
-      }
-    } catch (error) {
+    } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error('Message processing error:', error);
       }
@@ -267,15 +297,17 @@ const AppLayout: React.FC<{}> = () => {
               msg.role === 'user' ? 'justify-end' : 'justify-start'
             }`}
           >
-          {msg.role === 'ai' && (
-  <div className="flex-shrink-0 mt-1">
-    <img
-      src="/images/Vector-star.png"
-      className="h-4 w-4"
-      alt="AI"
-    />
-  </div>
-)}
+            {msg.role === 'ai' && (
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                  <img
+                    src="/images/Vector-star.png"
+                    className="h-3 w-3 brightness-2"
+                    alt="AI"
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex flex-col gap-1">
               {/* Message bubble */}
               <div className={`rounded-xl p-4 ${
@@ -293,14 +325,9 @@ const AppLayout: React.FC<{}> = () => {
                     <span className="text-xs text-gray-400">Generating...</span>
                   </div>
                 ) : (
-                  <div className="prose prose-invert text-sm/relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {msg.text}
-                    </ReactMarkdown>
-                  </div>
+                  <p className="text-sm/relaxed">{msg.text}</p>
                 )}
               </div>
-
               {/* Action buttons - always visible below bubble */}
               {!msg.isLoading && (
                 <div className={`flex gap-2 justify-${
@@ -394,7 +421,6 @@ const AppLayout: React.FC<{}> = () => {
     <div className="flex h-screen bg-[#1e1f24] text-white">
       {currentView === 'chat' && (
         <Sidebar
-          isLoading={isLoading}
           activeChat={activeChat}
           onNewChat={() => {
             const newConvo = conversationManager.startNewConversation('');
@@ -423,20 +449,36 @@ const AppLayout: React.FC<{}> = () => {
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
             <header className="hidden md:flex justify-between items-center mb-8 w-full max-w-6xl">
               <div
-                className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors"
-                onClick={() => setCurrentView('home')}
+                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={refreshPage}
               >
-                <div className="w-4 h-4 bg-blue-500 rounded-full" />
-                <span className="text-gray-300 text-lg font-medium">NomaRoot</span>
+                {/* Enhanced logo with better sizing */}
+                <img 
+                  src="/images/lANDAilogo2.png" 
+                  alt="LANDAi Logo" 
+                  className="h-20 w-auto max-w-xs" 
+                  style={{ maxHeight: '60px' }}
+                />
               </div>
               {renderAuthDropdown()}
             </header>
+
             <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
+              {/* mobile view  */}
+              <div className="md:hidden mb-6">
+                <img 
+                  src="/images/lANDAilogo2.png" 
+                  alt="LANDAi Logo" 
+                  className="h-16 w-auto mx-auto" 
+                  onClick={refreshPage}
+                />
+              </div>
+              
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
                 Get all you need<br />about your desired land
               </h1>
               <p className="text-gray-300 text-lg mb-8 text-center">How can I help you today?</p>
-              
+             
               <div className="relative w-full max-w-md mb-8">
                 <input
                   value={inputValue}
@@ -488,6 +530,7 @@ const AppLayout: React.FC<{}> = () => {
           renderChatContent()
         )}
       </div>
+      
       {showSearchPopup && (
         <SearchChatsInterface
           onClose={() => setShowSearchPopup(false)}
