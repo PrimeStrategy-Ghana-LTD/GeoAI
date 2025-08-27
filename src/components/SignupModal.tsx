@@ -100,7 +100,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
               />
               <h2 className="text-2xl font-bold text-white mb-2">Welcome to LandAI</h2>
               <p className="text-gray-200 text-center max-w-xs">
-               Join thousands of users finding in Exploring, analyzing, and planning smarter with LandAI 
+               Join thousands of users in Exploring, analyzing, and planning smarter with LandAI 
               </p>
             </div>
           </div>

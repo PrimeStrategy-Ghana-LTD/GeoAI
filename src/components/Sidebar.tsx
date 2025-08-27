@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       }`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
+      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-b border-gray-700`}>
         {!isCollapsed ? (
           <>
             <div
@@ -88,13 +88,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-sm text-blue-400">Generating...</span>
                 </div>
               ) : (
-                <>
-                 <img
+                <img
                   src="/images/pin.png"
                   alt="LANDAI Logo"
-                  className={`h-16 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80 mx-auto`}
-                   />
-                  </>
+                  className="h-16 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80 mx-auto"
+                />
               )}
             </div>
 
@@ -118,9 +116,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div className="flex flex-col items-center space-y-3">
             {isLoading ? (
-              <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
             ) : (
               <>
+                {/* Small centered logo (no squish) */}
+                <div className="flex items-center justify-center w-full">
+                  <img
+                    src="/images/pin.png"
+                    alt="LANDAI Logo"
+                    className="h-8 w-8 object-contain flex-shrink-0"
+                  />
+                </div>
+
                 <Button
                   size="icon"
                   className="bg-gray-700 hover:bg-gray-600 text-white"

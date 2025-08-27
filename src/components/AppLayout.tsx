@@ -452,7 +452,7 @@ const AppLayout: React.FC<{}> = () => {
     <div className="flex h-screen bg-[#1e1f24] text-white">
       {/* Sidebar - Only show in chat view */}
       {currentView === 'chat' && (
-        <div className={`relative transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'}`}>
+        <div className={`relative transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16'}`}>
           {isSidebarOpen && (
             <Sidebar
               isLoading={isLoading}
