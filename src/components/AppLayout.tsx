@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw, Menu, Send } from 'lucide-react';
+import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw, Menu, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Sidebar from './Sidebar';
@@ -28,7 +28,7 @@ const AppLayout: React.FC<{}> = () => {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [userInitial, setUserInitial] = useState<string>('U');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start with sidebar closed
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -287,13 +287,7 @@ const AppLayout: React.FC<{}> = () => {
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      <div className="flex justify-between items-center p-4 border-b border-gray-700/50">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
-        >
-          <Menu className="h-5 w-5 text-blue-400" />
-        </button>
+      <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
         {renderAuthDropdown()}
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
@@ -456,33 +450,53 @@ const AppLayout: React.FC<{}> = () => {
 
   return (
     <div className="flex h-screen bg-[#1e1f24] text-white">
-      {currentView === 'chat' && isSidebarOpen && (
-        <Sidebar
-          isLoading={isLoading}
-          isLoggedIn={isLoggedIn}
-          activeChat={activeChat}
-          onNewChat={() => {
-            const newConvo = conversationManager.startNewConversation('');
-            setActiveChat(newConvo.id);
-            setMessages([]);
-            setInputValue('');
-            setCurrentView('chat');
-          }}
-          onSearchChats={() => setShowSearchPopup(true)}
-          onChatSelect={(chatId) => {
-            conversationManager.setActiveConversation(chatId);
-            const convo = conversationManager.getCurrentConversation();
-            setMessages(
-              convo.messages.map(m => ({
-                role: m.role === 'assistant' ? 'ai' : m.role,
-                text: m.content
-              }))
-            );
-            setActiveChat(chatId);
-            setCurrentView('chat');
-          }}
-        />
+      {/* Sidebar - Only show in chat view */}
+      {currentView === 'chat' && (
+        <div className={`relative transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'}`}>
+          {isSidebarOpen && (
+            <Sidebar
+              isLoading={isLoading}
+              isLoggedIn={isLoggedIn}
+              activeChat={activeChat}
+              onNewChat={() => {
+                const newConvo = conversationManager.startNewConversation('');
+                setActiveChat(newConvo.id);
+                setMessages([]);
+                setInputValue('');
+                setCurrentView('chat');
+              }}
+              onSearchChats={() => setShowSearchPopup(true)}
+              onChatSelect={(chatId) => {
+                conversationManager.setActiveConversation(chatId);
+                const convo = conversationManager.getCurrentConversation();
+                setMessages(
+                  convo.messages.map(m => ({
+                    role: m.role === 'assistant' ? 'ai' : m.role,
+                    text: m.content
+                  }))
+                );
+                setActiveChat(chatId);
+                setCurrentView('chat');
+              }}
+            />
+          )}
+        </div>
       )}
+
+      {/* Sidebar toggle button - Only show pin when sidebar is closed in chat view */}
+      {currentView === 'chat' && !isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-4 z-50 p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
+        >
+          <img 
+            src="/images/pin.png" 
+            className="h-5 w-5" 
+            alt="Open sidebar" 
+          />
+        </button>
+      )}
+
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? (
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
@@ -570,9 +584,21 @@ const AppLayout: React.FC<{}> = () => {
             </div>
           </div>
         ) : (
-          renderChatContent()
+          <>
+            {renderChatContent()}
+            {/* Close sidebar button - Only show in chat view when sidebar is open */}
+            {isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="fixed left-64 top-4 z-50 p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
+              >
+                <ChevronLeft className="h-5 w-5 text-blue-400" />
+              </button>
+            )}
+          </>
         )}
       </div>
+      
       {showSearchPopup && (
         <SearchChatsInterface
           onClose={() => setShowSearchPopup(false)}

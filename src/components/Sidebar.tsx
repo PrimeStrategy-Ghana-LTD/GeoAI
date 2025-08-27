@@ -3,7 +3,6 @@ import {
   Plus,
   Search,
   MessageSquare,
-  ChevronRight,
   Pin,
   History,
   Loader2
@@ -17,7 +16,7 @@ interface SidebarProps {
   onChatSelect: (chatId: string) => void;
   activeChat?: string | null;
   isLoading?: boolean;
-  isLoggedIn?: boolean; // 👈 add flag for login state
+  isLoggedIn?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -26,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onChatSelect,
   activeChat,
   isLoading = false,
-  isLoggedIn = false // 👈 default false
+  isLoggedIn = false
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,18 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
-      {/* Collapse Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-1/2 z-10 bg-gray-700 border border-gray-600 rounded-full p-1 hover:bg-gray-600"
-      >
-        <ChevronRight
-          className={`w-4 h-4 text-gray-300 transition-transform ${
-            isCollapsed ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
         {!isCollapsed ? (
@@ -103,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ) : (
                 <>
                  <img
-                  src="/images/lANDAilogo2.png"
+                  src="/images/pin.png"
                   alt="LANDAI Logo"
                   className={`h-16 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80 mx-auto`}
                    />
@@ -119,7 +106,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               New Chat
             </Button>
 
-            {/* Keep only this Search Chats */}
             <Button
               variant="ghost"
               className="w-full text-gray-300 hover:bg-gray-700 mb-2"
