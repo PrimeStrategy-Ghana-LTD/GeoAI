@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw } from 'lucide-react';
-
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -46,7 +45,6 @@ const AppLayout: React.FC<{}> = () => {
     }
   }, []);
 
-  // Persist counter changes
   useEffect(() => {
     if (!isLoggedIn) {
       localStorage.setItem('searchCount', String(searchCount));
@@ -55,7 +53,12 @@ const AppLayout: React.FC<{}> = () => {
     }
   }, [searchCount, isLoggedIn]);
 
-  // Add the click-outside handler effect for dropdown
+  useEffect(() => {
+    if (!isLoggedIn && searchCount >= 3) {
+      setShowLoginModal(true);
+    }
+  }, [searchCount, isLoggedIn]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (showDropdown && !(e.target as Element).closest('.relative')) {
@@ -67,12 +70,10 @@ const AppLayout: React.FC<{}> = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDropdown]);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Home view event listener
   useEffect(() => {
     const handleGoToHome = () => setCurrentView('home');
     window.addEventListener('goToHome', handleGoToHome);
@@ -118,6 +119,12 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleVoiceInput = () => {
+    // ✅ Step 1: Add search limit check for voice input
+    if (!isLoggedIn && searchCount >= 3) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     if (!('webkitSpeechRecognition' in window)) {
       alert('Voice input is not supported in your browser');
       return;
@@ -161,6 +168,7 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleSendMessage = async (userTextParam?: string) => {
+    // ✅ Step 1: Add search limit check
     if (!isLoggedIn && searchCount >= 3) {
       setShowLoginModal(true);
       return;
@@ -233,6 +241,12 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleBubbleClick = (text: string) => {
+    // ✅ Step 2: Update suggestion click handler
+    if (!isLoggedIn && searchCount >= 3) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setInputValue(text);
     setTimeout(() => handleSendMessage(text), 50);
   };
@@ -407,6 +421,7 @@ const AppLayout: React.FC<{}> = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
               placeholder="Ask a follow-up..."
+              // ✅ Step 3: Disable input when limit is reached
               disabled={!isLoggedIn && searchCount >= 3}
             />
             <button
@@ -497,6 +512,7 @@ const AppLayout: React.FC<{}> = () => {
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="I'm looking for..."
                   className="w-full pl-12 pr-12 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
+                  // ✅ Step 3: Disable input when limit is reached
                   disabled={!isLoggedIn && searchCount >= 3}
                 />
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
@@ -521,6 +537,7 @@ const AppLayout: React.FC<{}> = () => {
                     key={sug}
                     onClick={() => handleBubbleClick(sug)}
                     className="bg-[#3b3c44] text-white py-2 px-4 rounded-full text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50"
+                    // ✅ Step 3: Disable buttons when limit is reached
                     disabled={!isLoggedIn && searchCount >= 3}
                   >
                     {sug}
