@@ -93,7 +93,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
               <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
               <p className="text-gray-200 text-center max-w-xs">
-                Access your personalized property recommendations
+                Explore, analyze, and plan smarter with LandAI.
               </p>
             </div>
           </div>
@@ -102,7 +102,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-white mb-1">Log In</h2>
               <p className="text-gray-400 text-sm">
-                Access your Land-AI account
+                Access your LandAI account
               </p>
             </div>
 

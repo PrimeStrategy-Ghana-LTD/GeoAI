@@ -98,9 +98,9 @@ const SignupModal: React.FC<SignupModalProps> = ({
                 alt="Logo" 
                 className="w-16 h-16 mb-6 object-contain"
               />
-              <h2 className="text-2xl font-bold text-white mb-2">Welcome to Land-AI</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">Welcome to LandAI</h2>
               <p className="text-gray-200 text-center max-w-xs">
-                Join thousands of users finding their perfect property with AI assistance
+               Join thousands of users finding in Exploring, analyzing, and planning smarter with LandAI 
               </p>
             </div>
           </div>
@@ -108,7 +108,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
           <div className="w-full md:w-1/2 p-8">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-white">Create Account</h2>
-              <p className="text-gray-400 text-sm">Join Land-AI to unlock all features</p>
+              <p className="text-gray-400 text-sm">Join LandAI to unlock all features</p>
             </div>
 
             <div className="flex border-b border-gray-700 mb-6">

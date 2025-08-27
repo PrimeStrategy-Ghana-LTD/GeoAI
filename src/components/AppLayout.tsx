@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw } from 'lucide-react';
+import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw, Menu, Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
 import Sidebar from './Sidebar';
 import SearchChatsInterface from './SearchChatsInterface';
 import LoginModal from './LoginModal';
@@ -29,8 +28,11 @@ const AppLayout: React.FC<{}> = () => {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [userInitial, setUserInitial] = useState<string>('U');
   const [showDropdown, setShowDropdown] = useState(false);
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const refreshPage = () => {
     window.location.reload();
   };
@@ -38,7 +40,6 @@ const AppLayout: React.FC<{}> = () => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(!!token);
-
     if (!token) {
       const stored = localStorage.getItem('searchCount');
       setSearchCount(stored ? parseInt(stored, 10) : 0);
@@ -90,17 +91,13 @@ const AppLayout: React.FC<{}> = () => {
 
   const regenerateResponse = async (messageIndex: number) => {
     if (messageIndex <= 0) return;
-
     const userMessage = messages[messageIndex - 1].text;
     setIsLoading(true);
-
     setMessages(prev => [...prev.slice(0, messageIndex),
       { role: 'ai', text: '', isLoading: true }
     ]);
-
     try {
       const aiResponse = await conversationManager.addUserMessage(userMessage);
-
       setMessages(prev => {
         const updated = [...prev.slice(0, messageIndex)];
         updated[messageIndex] = {
@@ -119,17 +116,15 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleVoiceInput = () => {
-    // ✅ Step 1: Add search limit check for voice input
     if (!isLoggedIn && searchCount >= 3) {
       setShowLoginModal(true);
       return;
     }
-    
+   
     if (!('webkitSpeechRecognition' in window)) {
       alert('Voice input is not supported in your browser');
       return;
     }
-
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -168,30 +163,24 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleSendMessage = async (userTextParam?: string) => {
-    // ✅ Step 1: Add search limit check
     if (!isLoggedIn && searchCount >= 3) {
       setShowLoginModal(true);
       return;
     }
-
     const userText = (userTextParam || inputValue).trim();
     if (!userText) return;
-
     setIsLoading(true);
     setCurrentView('chat');
     const controller = new AbortController();
     setAbortController(controller);
-
     setMessages(prev => [...prev,
       { role: 'user', text: userText },
       { role: 'ai', text: '', isLoading: true }
     ]);
     setInputValue('');
-
     if (!isLoggedIn) {
       setSearchCount(prev => prev + 1);
     }
-
     try {
       if (!activeChat) {
         const newConvo = conversationManager.startNewConversation(userText);
@@ -201,11 +190,9 @@ const AppLayout: React.FC<{}> = () => {
       } else {
         conversationManager.setActiveConversation(activeChat);
       }
-
       const aiResponse = await conversationManager.addUserMessage(userText, {
         abortSignal: controller.signal
       });
-
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = {
@@ -241,12 +228,11 @@ const AppLayout: React.FC<{}> = () => {
   };
 
   const handleBubbleClick = (text: string) => {
-    // ✅ Step 2: Update suggestion click handler
     if (!isLoggedIn && searchCount >= 3) {
       setShowLoginModal(true);
       return;
     }
-    
+   
     setInputValue(text);
     setTimeout(() => handleSendMessage(text), 50);
   };
@@ -301,10 +287,16 @@ const AppLayout: React.FC<{}> = () => {
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
+      <div className="flex justify-between items-center p-4 border-b border-gray-700/50">
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
+        >
+          <Menu className="h-5 w-5 text-blue-400" />
+        </button>
         {renderAuthDropdown()}
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -321,7 +313,6 @@ const AppLayout: React.FC<{}> = () => {
                 />
               </div>
             )}
-
             <div className="flex flex-col gap-1">
               <div
                 className={`rounded-xl p-4 ${
@@ -347,7 +338,6 @@ const AppLayout: React.FC<{}> = () => {
                   </div>
                 )}
               </div>
-
               {!msg.isLoading && (
                 <div
                   className={`flex gap-2 justify-${
@@ -386,7 +376,6 @@ const AppLayout: React.FC<{}> = () => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-
       {isLoading && (
         <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
           <div className="flex space-x-1">
@@ -406,22 +395,21 @@ const AppLayout: React.FC<{}> = () => {
           </button>
         </div>
       )}
-
       <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
             <img
-              src="/images/Vector-star.png"
+              src="/images/Vector.svg"
               alt=""
               className="h-8 w-8 mr-3 brightness-125"
             />
             <input
+              ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
+              className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm custom-scrollbar"
               placeholder="Ask a follow-up..."
-              // ✅ Step 3: Disable input when limit is reached
               disabled={!isLoggedIn && searchCount >= 3}
             />
             <button
@@ -435,43 +423,66 @@ const AppLayout: React.FC<{}> = () => {
                 <Mic className="h-4 w-4" />
               )}
             </button>
+            {/* Submit button */}
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!inputValue.trim() || isLoading || (!isLoggedIn && searchCount >= 3)}
+              className="ml-3 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="h-4 w-4 text-white" />
+            </button>
           </div>
         </div>
       </div>
+      <style>
+        {`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e1f24;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2b2c33;
+            border-radius: 3px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ffffff;
+          }
+        `}
+      </style>
     </div>
   );
 
   return (
     <div className="flex h-screen bg-[#1e1f24] text-white">
-      {currentView === 'chat' && (
-      <Sidebar
-      isLoading={isLoading}
-      isLoggedIn={isLoggedIn}   
-      activeChat={activeChat}
-      onNewChat={() => {
-      const newConvo = conversationManager.startNewConversation('');
-     setActiveChat(newConvo.id);
-     setMessages([]);
-     setInputValue('');
-     setCurrentView('chat');
-   }}
-    onSearchChats={() => setShowSearchPopup(true)}
-    onChatSelect={(chatId) => {
-     conversationManager.setActiveConversation(chatId);
-     const convo = conversationManager.getCurrentConversation();
-    setMessages(
-      convo.messages.map(m => ({
-        role: m.role === 'assistant' ? 'ai' : m.role,
-        text: m.content
-      }))
-    );
-    setActiveChat(chatId);
-    setCurrentView('chat');
-  }}
-/>
-
+      {currentView === 'chat' && isSidebarOpen && (
+        <Sidebar
+          isLoading={isLoading}
+          isLoggedIn={isLoggedIn}
+          activeChat={activeChat}
+          onNewChat={() => {
+            const newConvo = conversationManager.startNewConversation('');
+            setActiveChat(newConvo.id);
+            setMessages([]);
+            setInputValue('');
+            setCurrentView('chat');
+          }}
+          onSearchChats={() => setShowSearchPopup(true)}
+          onChatSelect={(chatId) => {
+            conversationManager.setActiveConversation(chatId);
+            const convo = conversationManager.getCurrentConversation();
+            setMessages(
+              convo.messages.map(m => ({
+                role: m.role === 'assistant' ? 'ai' : m.role,
+                text: m.content
+              }))
+            );
+            setActiveChat(chatId);
+            setCurrentView('chat');
+          }}
+        />
       )}
-
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? (
           <div className="p-4 md:p-8 flex flex-col min-h-screen items-center justify-center">
@@ -481,7 +492,7 @@ const AppLayout: React.FC<{}> = () => {
                 onClick={refreshPage}
               >
                 <img
-                  src="/images/lANDAilogo2.png"  
+                  src="/images/lANDAilogo2.png"
                   alt="LANDAi Logo"
                   className="h-30 w-auto max-w-xs"
                   style={{ maxHeight: '70px' }}
@@ -489,7 +500,6 @@ const AppLayout: React.FC<{}> = () => {
               </div>
               {renderAuthDropdown()}
             </header>
-
             <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
               <div className="md:hidden mb-6">
                 <img
@@ -499,58 +509,61 @@ const AppLayout: React.FC<{}> = () => {
                   onClick={refreshPage}
                 />
               </div>
-
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
-               Everything you need <br />to know about land in Ghana<br /> 
+              <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
+                Everything you need <br />to know about land in Ghana<br />
               </h1>
-               <p className="text-gray-300 text-lg mb-8 text-center">How can I help you today?</p>
-
-              <div className="relative w-full max-w-md mb-8">
+              <p className="text-gray-300 text-base md:text-lg mb-6 md:mb-8 text-center">How can I help you today?</p>
+              <div className="relative w-full max-w-md mb-6 md:mb-8">
                 <input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="I'm looking for..."
-                  className="w-full pl-12 pr-12 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
-                  // ✅ Step 3: Disable input when limit is reached
+                  className="w-full pl-12 pr-16 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
                   disabled={!isLoggedIn && searchCount >= 3}
                 />
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
                   <img src="/images/Vector-star.png" className="w-4 h-4" />
                 </div>
-                <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                  onClick={handleVoiceInput}
-                  disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
-                >
-                  {isMicActive ? (
-                    <Loader2 className="text-red-400 w-4 h-4 animate-spin" />
-                  ) : (
-                    <Mic className="w-4 h-4 text-blue-400 hover:text-blue-300 transition-colors" />
-                  )}
-                </button>
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
+                  <button
+                    onClick={handleVoiceInput}
+                    disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
+                    className="p-1"
+                  >
+                    {isMicActive ? (
+                      <Loader2 className="text-red-400 w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mic className="w-4 h-4 text-blue-400 hover:text-blue-300 transition-colors" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleSendMessage()}
+                    disabled={!inputValue.trim() || isLoading || (!isLoggedIn && searchCount >= 3)}
+                    className="p-1 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4 text-white" />
+                  </button>
+                </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 max-w-md w-full mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full mb-8 md:mb-10">
                 {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((sug) => (
                   <button
                     key={sug}
                     onClick={() => handleBubbleClick(sug)}
                     className="bg-[#3b3c44] text-white py-2 px-4 rounded-full text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50"
-                    // ✅ Step 3: Disable buttons when limit is reached
                     disabled={!isLoggedIn && searchCount >= 3}
                   >
                     {sug}
                   </button>
                 ))}
               </div>
-
               {!isLoggedIn && (
-                <div className="text-center text-sm text-gray-400 mb-8">
+                <div className="text-center text-sm text-gray-400 mb-6 md:mb-8">
                   {searchCount < 3 ? (
                     <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
                   ) : (
-                    <p className="text-red-400">  Please login to continue searching</p>
+                    <p className="text-red-400"> Please login to continue searching</p>
                   )}
                 </div>
               )}
@@ -560,7 +573,6 @@ const AppLayout: React.FC<{}> = () => {
           renderChatContent()
         )}
       </div>
-
       {showSearchPopup && (
         <SearchChatsInterface
           onClose={() => setShowSearchPopup(false)}
@@ -578,7 +590,6 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
-
       {showLoginModal && (
         <LoginModal
           onClose={() => setShowLoginModal(false)}
@@ -593,7 +604,6 @@ const AppLayout: React.FC<{}> = () => {
           }}
         />
       )}
-
       {showSignupModal && (
         <SignupModal
           onClose={() => setShowSignupModal(false)}
