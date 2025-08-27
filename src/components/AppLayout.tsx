@@ -32,13 +32,10 @@ const AppLayout: React.FC<{}> = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Function to refresh the page
   const refreshPage = () => {
     window.location.reload();
   };
 
-  // Load counter on mount
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     setIsLoggedIn(!!token);
@@ -402,7 +399,7 @@ const AppLayout: React.FC<{}> = () => {
             <img
               src="/images/Vector-star.png"
               alt=""
-              className="h-4 w-4 mr-3 brightness-125"
+              className="h-8 w-8 mr-3 brightness-125"
             />
             <input
               value={inputValue}
@@ -432,30 +429,32 @@ const AppLayout: React.FC<{}> = () => {
   return (
     <div className="flex h-screen bg-[#1e1f24] text-white">
       {currentView === 'chat' && (
-        <Sidebar
-          isLoading={isLoading}  
-          activeChat={activeChat}
-          onNewChat={() => {
-            const newConvo = conversationManager.startNewConversation('');
-            setActiveChat(newConvo.id);
-            setMessages([]);
-            setInputValue('');
-            setCurrentView('chat');
-          }}
-          onSearchChats={() => setShowSearchPopup(true)}
-          onChatSelect={(chatId) => {
-            conversationManager.setActiveConversation(chatId);
-            const convo = conversationManager.getCurrentConversation();
-            setMessages(
-              convo.messages.map(m => ({
-                role: m.role === 'assistant' ? 'ai' : m.role,
-                text: m.content
-              }))
-            );
-            setActiveChat(chatId);
-            setCurrentView('chat');
-          }}
-        />
+      <Sidebar
+      isLoading={isLoading}
+      isLoggedIn={isLoggedIn}   
+      activeChat={activeChat}
+      onNewChat={() => {
+      const newConvo = conversationManager.startNewConversation('');
+     setActiveChat(newConvo.id);
+     setMessages([]);
+     setInputValue('');
+     setCurrentView('chat');
+   }}
+    onSearchChats={() => setShowSearchPopup(true)}
+    onChatSelect={(chatId) => {
+     conversationManager.setActiveConversation(chatId);
+     const convo = conversationManager.getCurrentConversation();
+    setMessages(
+      convo.messages.map(m => ({
+        role: m.role === 'assistant' ? 'ai' : m.role,
+        text: m.content
+      }))
+    );
+    setActiveChat(chatId);
+    setCurrentView('chat');
+  }}
+/>
+
       )}
 
       <div className="flex-1 flex flex-col">
@@ -469,7 +468,7 @@ const AppLayout: React.FC<{}> = () => {
                 <img
                   src="/images/lANDAilogo2.png"
                   alt="LANDAi Logo"
-                  className="h-12 w-auto max-w-xs"
+                  className="h-14 w-auto max-w-xs"
                   style={{ maxHeight: '60px' }}
                 />
               </div>
