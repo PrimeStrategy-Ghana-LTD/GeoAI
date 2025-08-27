@@ -481,10 +481,10 @@ const AppLayout: React.FC<{}> = () => {
                 onClick={refreshPage}
               >
                 <img
-                  src="/images/lANDAilogo2.png"
+                  src="/images/lANDAilogo2.png"  
                   alt="LANDAi Logo"
-                  className="h-14 w-auto max-w-xs"
-                  style={{ maxHeight: '60px' }}
+                  className="h-30 w-auto max-w-xs"
+                  style={{ maxHeight: '70px' }}
                 />
               </div>
               {renderAuthDropdown()}
@@ -493,17 +493,17 @@ const AppLayout: React.FC<{}> = () => {
             <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
               <div className="md:hidden mb-6">
                 <img
-                  src="/images/lANDAilogo.png"
+                  src="/images/lANDAilogo2.png"
                   alt="LANDAi Logo"
-                  className="h-16 w-auto mx-auto"
+                  className="h-20 w-auto mx-auto"
                   onClick={refreshPage}
                 />
               </div>
 
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
-                Get all you need<br />about your desired land
+               Everything you need <br />to know about land in Ghana<br /> 
               </h1>
-              <p className="text-gray-300 text-lg mb-8 text-center">How can I help you today?</p>
+               <p className="text-gray-300 text-lg mb-8 text-center">How can I help you today?</p>
 
               <div className="relative w-full max-w-md mb-8">
                 <input
@@ -550,7 +550,7 @@ const AppLayout: React.FC<{}> = () => {
                   {searchCount < 3 ? (
                     <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
                   ) : (
-                    <p className="text-red-400">Please login to continue searching</p>
+                    <p className="text-red-400">  Please login to continue searching</p>
                   )}
                 </div>
               )}
