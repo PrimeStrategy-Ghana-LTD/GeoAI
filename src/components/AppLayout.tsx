@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Mic, ChevronDown, Copy, Edit3, Loader2, RefreshCw, Menu, Send,
-ChevronLeft, ChevronRight } from 'lucide-react';
+ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Sidebar from './Sidebar';
@@ -37,18 +37,74 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   const [hasStartedChatting, setHasStartedChatting] = useState(false);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [guestName, setGuestName] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fixed refresh function - always just reload the page
+  // Save state to localStorage for persistence
+  const saveAppState = () => {
+    const state = {
+      currentView,
+      activeChat,
+      messages,
+      hasStartedChatting,
+      isSidebarOpen
+    };
+    localStorage.setItem('appState', JSON.stringify(state));
+  };
+
+  // Restore state from localStorage
+  const restoreAppState = () => {
+    const savedState = localStorage.getItem('appState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setCurrentView(state.currentView || 'home');
+        setActiveChat(state.activeChat || null);
+        setMessages(state.messages || []);
+        setHasStartedChatting(state.hasStartedChatting || false);
+        setIsSidebarOpen(state.isSidebarOpen !== undefined ? state.isSidebarOpen : true);
+        
+        // If there's an active chat, restore it in conversation manager
+        if (state.activeChat) {
+          conversationManager.setActiveConversation(state.activeChat);
+        }
+      } catch (error) {
+        console.error('Error restoring app state:', error);
+      }
+    }
+  };
+
+  // Fixed refresh function - now preserves state
   const refreshPage = () => {
+    saveAppState();
     window.location.reload();
   };
 
   const goToHome = () => {
     setCurrentView('home');
-    setActiveChat(null);
-    setMessages([]);
+    saveAppState();
+  };
+
+  // New function to go back to chat from home
+  const goBackToChat = () => {
+    setCurrentView('chat');
+    // If there's no active chat but we have conversations, load the most recent one
+    if (!activeChat) {
+      const conversations = conversationManager.getConversations();
+      if (conversations.length > 0) {
+        const mostRecent = conversations[0]; // Assuming they're sorted by most recent
+        setActiveChat(mostRecent.id);
+        conversationManager.setActiveConversation(mostRecent.id);
+        setMessages(
+          mostRecent.messages.map(m => ({
+            role: m.role === 'assistant' ? 'ai' : m.role,
+            text: m.content
+          }))
+        );
+      }
+    }
+    saveAppState();
   };
 
   const openFeedbackForm = () => {
@@ -60,14 +116,13 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     const name = localStorage.getItem('user_name');
     const savedGuestName = localStorage.getItem('guest_name');
     const plan = localStorage.getItem('user_plan');
-    const savedView = localStorage.getItem('currentView') as 'home' | 'chat' | null;
     
     setIsLoggedIn(!!token);
     
     if (name) {
       setUserName(name);
       setUserInitial(name.charAt(0).toUpperCase());
-      setUserPlan(plan || 'Pro'); // Default to Pro for logged in users
+      setUserPlan(plan || 'Beta Test');
     } else if (savedGuestName) {
       setGuestName(savedGuestName);
       setUserInitial(savedGuestName.charAt(0).toUpperCase());
@@ -78,22 +133,22 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       const stored = localStorage.getItem('searchCount');
       setSearchCount(stored ? parseInt(stored, 10) : 0);
     }
-   
-    // Check if user has any existing conversations
-    const conversations = conversationManager.getConversations();
-    if (conversations.length > 0) {
-      setHasStartedChatting(true);
-      // Restore the saved view or default to chat if conversations exist
-      setCurrentView(savedView || 'chat');
-    } else if (savedView) {
-      setCurrentView(savedView);
-    }
+    
+    // Restore app state from localStorage
+    restoreAppState();
+
+    // Add event listener for sidebar toggle
+    const handleToggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+    window.addEventListener('toggleSidebar', handleToggleSidebar);
+    return () => window.removeEventListener('toggleSidebar', handleToggleSidebar);
   }, []);
 
+  // Save state whenever important state changes
   useEffect(() => {
-    // Save current view to localStorage whenever it changes
-    localStorage.setItem('currentView', currentView);
-  }, [currentView]);
+    if (hasStartedChatting) {
+      saveAppState();
+    }
+  }, [currentView, activeChat, messages, hasStartedChatting, isSidebarOpen]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -144,7 +199,6 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
 
   const regenerateResponse = async (messageIndex: number) => {
     if (messageIndex <= 0) return;
-
     const userMessage = messages[messageIndex - 1].text;
     setIsLoading(true);
     setMessages(prev => [...prev.slice(0, messageIndex),
@@ -185,7 +239,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       setShowLoginModal(true);
       return;
     }
-   
+    
     if (!('webkitSpeechRecognition' in window)) {
       alert('Voice input is not supported in your browser');
       return;
@@ -217,8 +271,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     try {
       const data = await loginUser(email, password);
       localStorage.setItem('access_token', data.access_token);
-     
-      // Only use the actual name from the API response
+      
       const displayName = (data as any).name;
       
       if (displayName) {
@@ -226,19 +279,18 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         setUserName(displayName);
         setUserInitial(displayName.charAt(0).toUpperCase());
       } else {
-        // Use email prefix as fallback
         const emailName = email.split('@')[0];
         localStorage.setItem('user_name', emailName);
         setUserName(emailName);
         setUserInitial(emailName.charAt(0).toUpperCase());
       }
       
-      localStorage.setItem('user_plan', 'Pro');
+      localStorage.setItem('user_plan', 'Beta Test');
       
       setIsLoggedIn(true);
       setShowLoginModal(false);
-      setUserPlan('Pro');
-      setSearchCount(0); // Reset search count for logged in users
+      setUserPlan('Beta Test');
+      setSearchCount(0);
     } catch (err: any) {
       alert(err.message);
     }
@@ -249,14 +301,14 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       const data = await signupUser(email, password, name);
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user_name', name);
-      localStorage.setItem('user_plan', 'Pro'); // Set plan for new users
+      localStorage.setItem('user_plan', 'Beta Test');
       
       setIsLoggedIn(true);
       setShowSignupModal(false);
       setUserInitial(name.charAt(0).toUpperCase());
       setUserName(name);
-      setUserPlan('Pro');
-      setSearchCount(0); // Reset search count for new users
+      setUserPlan('Beta Test');
+      setSearchCount(0);
     } catch (err: any) {
       alert(err.message);
     }
@@ -267,8 +319,6 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       setShowLoginModal(true);
       return;
     }
-
-    // Check if guest needs to provide name
     if (!isLoggedIn && !guestName && !localStorage.getItem('guest_name')) {
       setShowNamePrompt(true);
       return;
@@ -276,15 +326,14 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
 
     const userText = (userTextParam || inputValue).trim();
     if (!userText) return;
-
-    // First message - show sidebar and mark as started chatting
+    
+    // Set hasStartedChatting to true when user sends their first message
     if (!hasStartedChatting) {
       setHasStartedChatting(true);
     }
 
     setIsLoading(true);
     setCurrentView('chat');
-
     const controller = new AbortController();
     setAbortController(controller);
 
@@ -340,6 +389,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     } finally {
       setIsLoading(false);
       setAbortController(null);
+      saveAppState(); // Save state after message completion
     }
   };
 
@@ -363,17 +413,20 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       setShowLoginModal(true);
       return;
     }
-   
+    
     setInputValue(text);
     setTimeout(() => handleSendMessage(text), 50);
   };
 
   const handleLogout = () => {
+    // Clear all saved state
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_name');
     localStorage.removeItem('user_plan');
     localStorage.removeItem('guest_name');
     localStorage.removeItem('currentView');
+    localStorage.removeItem('appState');
+    
     setIsLoggedIn(false);
     setMessages([]);
     setCurrentView('home');
@@ -389,7 +442,10 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   };
 
   const renderAuthDropdown = () => {
-    return isLoggedIn ? (
+    // Only show on landing page when logged in
+    if (currentView !== 'home' || !isLoggedIn) return null;
+    
+    return (
       <div className="relative user-dropdown">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
@@ -400,16 +456,15 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
           </div>
           <div className="hidden md:flex flex-col items-start">
             <span className="text-white text-sm font-medium">{userName}</span>
-            <span className="text-gray-400 text-xs">{userPlan} Plan</span>
+            <span className="text-gray-400 text-xs">Pro Plan</span>
           </div>
           <ChevronDown size={14} />
         </button>
-
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-48 bg-[#2b2c33] text-white border border-gray-700 rounded shadow-md z-50">
             <div className="px-4 py-2 border-b border-gray-700">
               <p className="text-sm font-medium">{userName}</p>
-              <p className="text-xs text-gray-400">{userPlan} Plan</p>
+              <p className="text-xs text-gray-400">Pro Plan</p>
             </div>
             <button
               onClick={handleLogout}
@@ -420,7 +475,14 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
           </div>
         )}
       </div>
-    ) : (
+    );
+  };
+
+  const renderLoginSignupButtons = () => {
+    // Only show on landing page when not logged in
+    if (currentView !== 'home' || isLoggedIn) return null;
+    
+    return (
       <div className="flex gap-4">
         <button
           onClick={() => setShowLoginModal(true)}
@@ -438,37 +500,34 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     );
   };
 
-const renderFeedbackButton = () => {
-  // Calculate the right position based on sidebar state
-  let rightPosition = 'right-4'; // Default position
-  
-  if (hasStartedChatting && currentView === 'chat') {
-    if (isSidebarOpen) {
-      rightPosition = 'right-4 md:right-[17rem]'; // 64px * 4 = 256px (w-64) + some padding
-    } else {
-      rightPosition = 'right-4 md:right-[5rem]'; // 16px * 4 = 64px (w-16) + some padding
-    }
-  }
+  const renderFeedbackButton = () => {
+    // Only show on chat view, positioned inline with input
+    if (currentView !== 'chat') return null;
+    
+    return null; // We'll integrate it into the input area instead
+  };
 
-  return (
-    <button
-      onClick={openFeedbackForm}
-      className={`fixed bottom-4 z-40 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 feedback-heartbeat hover:animate-none ${rightPosition}`}
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012-2h-5l-5 5v-5z" />
-      </svg>
-      <span>Give Feedback</span>
-    </button>
-  );
-};
+ const renderHomeContent = () => (
+  <div className="flex flex-col h-full bg-[#1e1f24] items-center justify-center">
+    {/* Back to Chat Button - only show if user has started chatting AND eligible (logged in OR trial not exhausted) */}
+    {(hasStartedChatting && currentView === 'home' && 
+      (isLoggedIn || (!isLoggedIn && searchCount < 3))) && (
+      <button
+        onClick={goBackToChat}
+        className="fixed left-4 top-4 z-50 p-3 rounded-full bg-[#2b2c33] hover:bg-[#3b3c44] border border-gray-600 transition-all flex items-center gap-2 text-blue-400 hover:text-blue-300"
+        title="Back to Chat"
+      >
+        <ArrowLeft className="h-5 w-5" />
+        <span className="hidden sm:inline text-sm">Back to Chat</span>
+      </button>
+    )}
 
-  const renderHomeContent = () => (
-    <div className="flex flex-col h-full bg-[#1e1f24] items-center justify-center">
+
       <div className="flex justify-end items-center p-4 border-b border-gray-700/50 w-full">
         {renderAuthDropdown()}
+        {renderLoginSignupButtons()}
       </div>
-     
+      
       <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
         {hasStartedChatting && (
           <div className="mb-6">
@@ -479,23 +538,23 @@ const renderFeedbackButton = () => {
             />
           </div>
         )}
-       
+        
         {!hasStartedChatting && (
           <div className="mb-8">
             <img
               src="/images/lANDAi.png"    
               alt="LANDAi Logo"
-              className="h-20 w-auto mx-auto"
+              className="h-20 w-auto cursor-pointer transition duration-200 hover:opacity-80"
             />
           </div>
         )}
-       
+        
         <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-6 text-center leading-tight">
           Everything you need <br />to know about land in Ghana<br />
         </h1>
-        <p className="text-gray-300 text-lg md:text-xl mb-8 md:mb-10 text-center max-w-2xl leading-relaxed">How can I help you today?</p>
-       
-        <div className="relative w-full max-w-md mb-6 md:mb-8">
+        <p className="text-gray-300 text-lg md:text-xl mb-6 text-center max-w-2xl leading-relaxed">How can I help you today?</p>
+        
+        <div className="relative w-full max-w-md mb-4">
           <input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -528,22 +587,36 @@ const renderFeedbackButton = () => {
             </button>
           </div>
         </div>
-       
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full mb-8 md:mb-10">
+        
+        {/* Feedback button - positioned outside and above the input box */}
+        <div className="w-full max-w-md mb-4 flex justify-center">
+          <button
+            onClick={openFeedbackForm}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 shadow-lg"
+            title="Give Feedback"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012-2h-5l-5 5v-5z" />
+            </svg>
+            <span>Give Feedback</span>
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full mb-6">
           {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((suggestion) => (
             <button
               key={suggestion}
               onClick={() => handleBubbleClick(suggestion)}
-              className="bg-[#3b3c44] text-white py-2 px-4 rounded-full text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50"
+              className="bg-[#3b3c44] text-white py-2 px-3 rounded-full text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50"
               disabled={!isLoggedIn && searchCount >= 3}
             >
               {suggestion}
             </button>
           ))}
         </div>
-       
+        
         {!isLoggedIn && (
-          <div className="text-center text-sm text-gray-400 mb-6 md:mb-8">
+          <div className="text-center text-sm text-gray-400 mb-4">
             {searchCount < 3 ? (
               <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
             ) : (
@@ -557,12 +630,6 @@ const renderFeedbackButton = () => {
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      {/* Only show auth dropdown when sidebar is collapsed or not visible */}
-      {(!hasStartedChatting || !isSidebarOpen) && (
-        <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
-          {renderAuthDropdown()}
-        </div>
-      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div
@@ -599,7 +666,7 @@ const renderFeedbackButton = () => {
                   </div>
                 ) : (
                   <div className="prose prose-invert max-w-none text-gray-100">
-                    <ReactMarkdown 
+                    <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
                         p: ({ children }) => (
@@ -728,7 +795,22 @@ const renderFeedbackButton = () => {
         </div>
       )}
 
+      {/* Chat input with external feedback button */}
       <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
+        {/* Feedback button positioned outside and above the input */}
+        <div className="max-w-3xl mx-auto mb-3 flex justify-end">
+          <button
+            onClick={openFeedbackForm}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 shadow-lg"
+            title="Give Feedback"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012-2h-5l-5 5v-5z" />
+            </svg>
+            <span>Feedback</span>
+          </button>
+        </div>
+        
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
             <img
@@ -787,6 +869,7 @@ const renderFeedbackButton = () => {
               setMessages([]);
               setInputValue('');
               setCurrentView('chat');
+              saveAppState();
             }}
             onSearchChats={() => setShowSearchPopup(true)}
             onChatSelect={(chatId) => {
@@ -801,46 +884,22 @@ const renderFeedbackButton = () => {
                 );
                 setActiveChat(chatId);
                 setCurrentView('chat');
+                saveAppState();
               } catch (error) {
                 console.error('Error selecting chat:', error);
               }
             }}
             onGoHome={goToHome}
             onLogout={handleLogout}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           />
         </div>
-      )}
-
-      {/* Sidebar toggle buttons - Only show when in chat mode */}
-      {hasStartedChatting && currentView === 'chat' && !isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="fixed left-4 top-4 z-50 p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
-        >
-          <img
-            src="/images/pin.png"
-            className="h-5 w-5"
-            alt="Open sidebar"
-          />
-        </button>
-      )}
-
-      {hasStartedChatting && currentView === 'chat' && isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(false)}
-          className="fixed left-64 top-4 z-50 p-2 rounded-md bg-[#2b2c33] hover:bg-[#3b3c44] transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5 text-blue-400" />
-        </button>
       )}
 
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? renderHomeContent() : renderChatContent()}
       </div>
-     
-      {/* Feedback button - visible on both home and chat views */}
-      {renderFeedbackButton()}
-     
+      
       {/* Name prompt for guest users */}
       {showNamePrompt && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -874,7 +933,7 @@ const renderFeedbackButton = () => {
           </div>
         </div>
       )}
-     
+      
       {/* Modal components */}
       {showSearchPopup && (
         <SearchChatsInterface
@@ -890,10 +949,11 @@ const renderFeedbackButton = () => {
             );
             setActiveChat(chatId);
             setCurrentView('chat');
+            saveAppState();
           }}
         />
       )}
-     
+      
       {showLoginModal && (
         <LoginModal
           onClose={() => setShowLoginModal(false)}
@@ -908,7 +968,7 @@ const renderFeedbackButton = () => {
           }}
         />
       )}
-     
+      
       {showSignupModal && (
         <SignupModal
           onClose={() => setShowSignupModal(false)}

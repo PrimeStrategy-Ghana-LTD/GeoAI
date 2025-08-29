@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, MessageSquare, Pin, History, Loader2, User, LogOut, Home, X } from 'lucide-react';
+import { Plus, Search, MessageSquare, Pin, History, Loader2, User,
+LogOut, Home, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { conversationManager } from '@/lib/ConversationManager';
 
@@ -9,6 +10,7 @@ interface SidebarProps {
   onChatSelect: (chatId: string) => void;
   onGoHome: () => void;
   onLogout: () => void;
+  onToggleSidebar: () => void;
   isCollapsed?: boolean;
   activeChat?: string | null;
   isLoading?: boolean;
@@ -23,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onChatSelect,
   onGoHome,
   onLogout,
+  onToggleSidebar,
   isCollapsed = false,
   activeChat,
   isLoading = false,
@@ -74,19 +77,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     window.location.reload();
   };
 
-  // Clean collapsed sidebar - only essential buttons, no numbered chats
+  // Clean collapsed sidebar with toggle icons
   if (isCollapsed) {
     return (
       <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-16 items-center">
-        {/* Header - Collapsed */}
+        {/* Header - Collapsed with toggle button */}
         <div className="p-3 border-b border-gray-700 flex flex-col items-center space-y-4 w-full">
-          <div className="cursor-pointer p-2 hover:bg-gray-700 rounded-lg transition-colors" onClick={handleLogoClick}>
-            <img
-              src="/images/pin.png"
-              alt="LANDAI Logo"
-              className="h-8 w-8 object-contain transition duration-200 hover:opacity-80"
-            />
-          </div>
+          <button
+            className="cursor-pointer p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            onClick={onToggleSidebar}
+            title="Expand sidebar"
+          >
+            <ChevronRight className="h-6 w-6 text-blue-400" />
+          </button>
         </div>
 
         {/* Action buttons - Collapsed */}
@@ -98,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <Home className="w-5 h-5" />
           </button>
-         
+
           <button
             className="p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors w-12 h-12 flex items-center justify-center"
             onClick={onNewChat}
@@ -106,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <Plus className="w-5 h-5" />
           </button>
-         
+
           {chats.length > 0 && (
             <button
               className="p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors w-12 h-12 flex items-center justify-center relative"
@@ -114,10 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               title="Search Chats"
             >
               <Search className="w-5 h-5" />
-              {chats.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                </span>
-              )}
             </button>
           )}
         </div>
@@ -127,12 +126,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           {(isLoggedIn || userInitial) && (
             <div
               className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg cursor-pointer hover:scale-105 transition-transform"
-            
             >
               {userInitial}
             </div>
           )}
-         
+
           {isLoggedIn && (
             <button
               onClick={onLogout}
@@ -152,22 +150,31 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-64">
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-center mb-4">
-          {isLoading ? (
-            <div className="flex items-center gap-2 animate-pulse">
-              <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
-              <span className="text-sm text-blue-400">Generating...</span>
-            </div>
-          ) : (
-            <img
-              src="/images/pin.png"
-              alt="LANDAI Logo"
-              className="h-12 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80"
-              onClick={handleLogoClick}
-            />
-          )}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            {isLoading ? (
+              <div className="flex items-center gap-2 animate-pulse">
+                <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                <span className="text-sm text-blue-400">Generating...</span>
+              </div>
+            ) : (
+              <img
+                src="/images/pin.png"
+                alt="LANDAI Logo"
+                className="h-12 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80"
+                onClick={handleLogoClick}
+              />
+            )}
+          </div>
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            title="Collapse sidebar"
+          >
+            <ChevronLeft className="h-5 w-5 text-blue-400" />
+          </button>
         </div>
-       
+
         {/* Action Buttons */}
         <div className="space-y-2">
           <Button
@@ -178,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Home className="w-4 h-4 mr-2" />
             Home
           </Button>
-         
+
           <Button
             className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2 justify-start"
             onClick={onNewChat}
@@ -186,7 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Plus className="w-4 h-4 mr-2" />
             New Chat
           </Button>
-         
+
           <Button
             variant="ghost"
             className="w-full text-gray-300 hover:bg-gray-700 mb-2 justify-start"
@@ -290,7 +297,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {userName || 'Guest User'}
               </p>
               <p className="text-xs text-gray-400">
-                {isLoggedIn ? 'Test Mode' : 'Test Mode'}
+                Beta Test
               </p>
             </div>
             {isLoggedIn && (
@@ -350,7 +357,7 @@ const ChatRow = ({
         {chat.lastActive.toLocaleString()}
       </p>
     </div>
-   
+
     {showActions && (
       <div className="flex opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
         <button
@@ -381,5 +388,5 @@ const ChatRow = ({
     )}
   </div>
 );
-
+ 
 export default Sidebar;
