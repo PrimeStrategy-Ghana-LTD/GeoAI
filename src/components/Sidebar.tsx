@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Plus,
-  Search,
-  MessageSquare,
-  Pin,
-  History,
-  Loader2
-} from 'lucide-react';
+import { Plus, Search, MessageSquare, Pin, History, Loader2, User, LogOut, Home, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { conversationManager } from '@/lib/ConversationManager';
 
@@ -14,20 +7,29 @@ interface SidebarProps {
   onNewChat: () => void;
   onSearchChats: () => void;
   onChatSelect: (chatId: string) => void;
+  onGoHome: () => void;
+  onLogout: () => void;
+  isCollapsed?: boolean;
   activeChat?: string | null;
   isLoading?: boolean;
   isLoggedIn?: boolean;
+  userName?: string;
+  userInitial?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   onNewChat,
   onSearchChats,
   onChatSelect,
+  onGoHome,
+  onLogout,
+  isCollapsed = false,
   activeChat,
   isLoading = false,
-  isLoggedIn = false
+  isLoggedIn = false,
+  userName = '',
+  userInitial = ''
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [chats, setChats] = useState<
     { id: string; title: string; isPinned: boolean; lastActive: Date }[]
@@ -68,159 +70,260 @@ const Sidebar: React.FC<SidebarProps> = ({
     window.dispatchEvent(new Event('chatListUpdated'));
   };
 
-  return (
-    <div
-      className={`h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      {/* Header */}
-      <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-b border-gray-700`}>
-        {!isCollapsed ? (
-          <>
-            <div
-              className="flex items-center gap-2 mb-3 cursor-pointer group"
-              onClick={() => window.dispatchEvent(new Event('goToHome'))}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2 animate-pulse">
-                  <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                  <span className="text-sm text-blue-400">Generating...</span>
-                </div>
-              ) : (
-                <img
-                  src="/images/pin.png"
-                  alt="LANDAI Logo"
-                  className="h-16 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80 mx-auto"
-                />
-              )}
-            </div>
+  const handleLogoClick = () => {
+    window.location.reload();
+  };
 
-            <Button
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2"
-              onClick={onNewChat}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Chat
-            </Button>
+  // If sidebar is collapsed, show only minimal icons
+  if (isCollapsed) {
+    return (
+      <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-16 items-center">
+        {/* Header - Collapsed with better logo visibility */}
+        <div className="p-3 border-b border-gray-700 flex flex-col items-center space-y-4 w-full">
+          <div className="cursor-pointer p-2 hover:bg-gray-700 rounded-lg transition-colors" onClick={handleLogoClick}>
+            <img
+              src="/images/lANDAilogo2.png"
+              alt="LANDAI Logo"
+              className="h-10 w-10 object-contain transition duration-200 hover:opacity-80"
+            />
+          </div>
+         
+          <button
+            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors w-10 h-10 flex items-center justify-center"
+            onClick={onGoHome}
+            title="Home"
+          >
+            <Home className="w-4 h-4" />
+          </button>
+         
+          <button
+            className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors w-10 h-10 flex items-center justify-center"
+            onClick={onNewChat}
+            title="New Chat"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+         
+          <button
+            className="p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors w-10 h-10 flex items-center justify-center"
+            onClick={onSearchChats}
+            title="Search Chats"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+        </div>
 
-            <Button
-              variant="ghost"
-              className="w-full text-gray-300 hover:bg-gray-700 mb-2"
-              onClick={onSearchChats}
-            >
-              <Search className="w-4 h-4 mr-2" />
-              Search Chats
-            </Button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center space-y-3">
-            {isLoading ? (
-              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            ) : (
-              <>
-                {/* Small centered logo (no squish) */}
-                <div className="flex items-center justify-center w-full">
-                  <img
-                    src="/images/pin.png"
-                    alt="LANDAI Logo"
-                    className="h-8 w-8 object-contain flex-shrink-0"
-                  />
-                </div>
-
-                <Button
-                  size="icon"
-                  className="bg-gray-700 hover:bg-gray-600 text-white"
-                  onClick={onNewChat}
-                  title="New Chat"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-gray-300 hover:bg-gray-700"
-                  onClick={onSearchChats}
-                  title="Search Chats"
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              </>
+        {/* Chat List Preview - Collapsed */}
+        {isLoggedIn && chats.length > 0 && (
+          <div className="flex-1 py-2 flex flex-col items-center space-y-2 overflow-hidden">
+            {chats.slice(0, 8).map((chat, index) => (
+              <button
+                key={chat.id}
+                onClick={() => onChatSelect(chat.id)}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${
+                  activeChat === chat.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+                title={chat.title}
+              >
+                {index + 1}
+              </button>
+            ))}
+            {chats.length > 8 && (
+              <div className="w-10 h-6 rounded-lg bg-gray-800 flex items-center justify-center text-xs text-gray-400">
+                +{chats.length - 8}
+              </div>
             )}
           </div>
         )}
+
+        {/* Footer with user profile - Collapsed */}
+        <div className="mt-auto p-3 border-t border-gray-700 flex flex-col items-center space-y-3 w-full">
+          {(isLoggedIn || userInitial) && (
+            <div
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg"
+              title={userName || 'Guest User'}
+            >
+              {userInitial}
+            </div>
+          )}
+         
+          {isLoggedIn && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-gray-400 hover:text-red-400 transition-colors w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-700"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Full sidebar view
+  return (
+    <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-64">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-700">
+        <div className="flex items-center justify-center mb-4">
+          {isLoading ? (
+            <div className="flex items-center gap-2 animate-pulse">
+              <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+              <span className="text-sm text-blue-400">Generating...</span>
+            </div>
+          ) : (
+            <img
+              src="/images/lANDAilogo2.png"
+              alt="LANDAI Logo"
+              className="h-12 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80"
+              onClick={handleLogoClick}
+            />
+          )}
+        </div>
+       
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          <Button
+            variant="ghost"
+            className="w-full text-gray-300 hover:bg-blue-600 hover:text-white mb-2 justify-start"
+            onClick={onGoHome}
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Home
+          </Button>
+         
+          <Button
+            className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2 justify-start"
+            onClick={onNewChat}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Chat
+          </Button>
+         
+          <Button
+            variant="ghost"
+            className="w-full text-gray-300 hover:bg-gray-700 mb-2 justify-start"
+            onClick={onSearchChats}
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Search Chats
+          </Button>
+        </div>
       </div>
 
       {/* Chat List (only if logged in) */}
       {isLoggedIn && (
         <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-          {!isCollapsed && pinnedChats.length > 0 && (
+          {chats.length === 0 ? (
+            <div className="text-center text-gray-400 text-sm py-8">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No conversations yet</p>
+              <p className="text-xs">Start a new chat to begin</p>
+            </div>
+          ) : (
             <>
-              <div className="text-xs text-gray-400 px-2 mb-2 flex items-center">
-                <Pin className="w-3 h-3 mr-1" />
-                Pinned
-              </div>
-              {pinnedChats.map((chat) => (
-                <ChatRow
-                  key={chat.id}
-                  chat={chat}
-                  isActive={activeChat === chat.id}
-                  onClick={() => onChatSelect(chat.id)}
-                  onTogglePin={() => togglePin(chat.id)}
-                  onDelete={() => deleteChat(chat.id)}
-                  pinned
-                />
-              ))}
+              {pinnedChats.length > 0 && (
+                <>
+                  <div className="text-xs text-gray-400 px-2 mb-2 flex items-center font-medium">
+                    <Pin className="w-3 h-3 mr-1" />
+                    Pinned
+                  </div>
+                  {pinnedChats.map((chat) => (
+                    <ChatRow
+                      key={chat.id}
+                      chat={chat}
+                      isActive={activeChat === chat.id}
+                      onClick={() => onChatSelect(chat.id)}
+                      onTogglePin={() => togglePin(chat.id)}
+                      onDelete={() => deleteChat(chat.id)}
+                      pinned
+                    />
+                  ))}
+                </>
+              )}
+              {unpinnedChats.length > 0 && (
+                <>
+                  <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center font-medium">
+                    <History className="w-3 h-3 mr-1" />
+                    Recent
+                  </div>
+                  {unpinnedChats.map((chat) => (
+                    <ChatRow
+                      key={chat.id}
+                      chat={chat}
+                      isActive={activeChat === chat.id}
+                      onClick={() => onChatSelect(chat.id)}
+                      onTogglePin={() => togglePin(chat.id)}
+                      onDelete={() => deleteChat(chat.id)}
+                    />
+                  ))}
+                </>
+              )}
             </>
           )}
+        </div>
+      )}
 
-          {!isCollapsed && unpinnedChats.length > 0 && (
-            <>
-              <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center">
-                <History className="w-3 h-3 mr-1" />
-                Recent
-              </div>
-              {unpinnedChats.map((chat) => (
-                <ChatRow
-                  key={chat.id}
-                  chat={chat}
-                  isActive={activeChat === chat.id}
-                  onClick={() => onChatSelect(chat.id)}
-                  onTogglePin={() => togglePin(chat.id)}
-                  onDelete={() => deleteChat(chat.id)}
-                />
-              ))}
-            </>
-          )}
-
-          {isCollapsed && (
-            <div className="flex flex-col items-center gap-2">
-              {filteredChats.slice(0, 5).map((chat) => (
-                <button
-                  key={chat.id}
-                  className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-                    activeChat === chat.id ? 'bg-gray-700' : ''
-                  }`}
-                  onClick={() => onChatSelect(chat.id)}
-                  title={chat.title}
-                >
-                  <MessageSquare className="w-4 h-4 text-gray-400" />
-                </button>
-              ))}
+      {/* Guest user chat preview with pin/delete functionality */}
+      {!isLoggedIn && chats.length > 0 && (
+        <div className="flex-1 overflow-y-auto px-2 py-3">
+          <div className="text-xs text-gray-400 px-2 mb-2 flex items-center font-medium">
+            <History className="w-3 h-3 mr-1" />
+            Current Session
+          </div>
+          {chats.slice(0, 3).map((chat) => (
+            <ChatRow
+              key={chat.id}
+              chat={chat}
+              isActive={activeChat === chat.id}
+              onClick={() => onChatSelect(chat.id)}
+              onTogglePin={() => togglePin(chat.id)}
+              onDelete={() => deleteChat(chat.id)}
+              isGuest={true}
+              showActions={true} // Enable actions for guest users too
+            />
+          ))}
+          {chats.length > 3 && (
+            <div className="px-2 py-1 text-xs text-gray-500 text-center">
+              +{chats.length - 3} more chats
             </div>
           )}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="p-3 border-t border-gray-700 text-xs text-gray-500">
-        {!isCollapsed ? (
-          <>
-            <p>© {new Date().getFullYear()} LANDAI</p>
-            <p className="mt-1">Terms & Privacy</p>
-          </>
+      {/* Footer with user profile - Fixed at bottom */}
+      <div className="mt-auto p-3 border-t border-gray-700">
+        {(isLoggedIn || userInitial) ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#2b2c33] to-[#323340] border border-gray-600/50">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0">
+              {userInitial}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {userName || 'Guest User'}
+              </p>
+              <p className="text-xs text-gray-400">
+                {isLoggedIn ? 'Free Plan' : 'Guest Mode'}
+              </p>
+            </div>
+            {isLoggedIn && (
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-gray-700/50"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         ) : (
-          <div className="text-center">©</div>
+          <div className="text-center text-gray-400 text-sm py-4">
+            <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs">Sign in to save your chats</p>
+          </div>
         )}
       </div>
     </div>
@@ -233,7 +336,9 @@ const ChatRow = ({
   onClick,
   onTogglePin,
   onDelete,
-  pinned = false
+  pinned = false,
+  isGuest = false,
+  showActions = true
 }: {
   chat: { id: string; title: string; lastActive: Date };
   isActive: boolean;
@@ -241,53 +346,56 @@ const ChatRow = ({
   onTogglePin: () => void;
   onDelete: () => void;
   pinned?: boolean;
+  isGuest?: boolean;
+  showActions?: boolean;
 }) => (
   <div
-    className={`group flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-700/70 transition-colors ${
-      isActive ? 'bg-gray-700' : ''
+    className={`group flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 mb-1 ${
+      isActive
+        ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30'
+        : 'hover:bg-gray-700/50 hover:border-gray-600/30 border border-transparent'
     }`}
     onClick={onClick}
   >
-    <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-    <div className="ml-2 overflow-hidden flex-1 min-w-0">
-      <p className="text-sm text-gray-200 truncate">{chat.title}</p>
+    <MessageSquare className={`w-4 h-4 flex-shrink-0 mr-3 ${isActive ? 'text-blue-400' : 'text-gray-400'}`} />
+    <div className="overflow-hidden flex-1 min-w-0">
+      <p className={`text-sm truncate font-medium ${isActive ? 'text-white' : 'text-gray-200'}`}>
+        {chat.title}
+      </p>
       <p className="text-xs text-gray-400 truncate">
         {chat.lastActive.toLocaleString()}
       </p>
     </div>
-    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onTogglePin();
-        }}
-        className="p-1 text-gray-400 hover:text-yellow-400"
-        title={pinned ? 'Unpin' : 'Pin'}
-      >
-        <Pin className="w-3 h-3" />
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="p-1 text-gray-400 hover:text-red-400 ml-1"
-        title="Delete"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-3 w-3"
-          viewBox="0 0 20 20"
-          fill="currentColor"
+   
+    {/* Always show actions on hover, even for guest users */}
+    {showActions && (
+      <div className="flex opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin();
+          }}
+          className="p-1.5 hover:bg-gray-600/50 rounded-md transition-colors"
+          title={pinned ? 'Unpin' : 'Pin'}
         >
-          <path
-            fillRule="evenodd"
-            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-            clipRule="evenodd"
+          <Pin
+            className={`w-3 h-3 ${pinned ? 'text-blue-400 fill-blue-400' : 'text-gray-400 hover:text-blue-400'}`}
           />
-        </svg>
-      </button>
-    </div>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (window.confirm('Are you sure you want to delete this chat?')) {
+              onDelete();
+            }
+          }}
+          className="p-1.5 hover:bg-red-500/20 rounded-md text-gray-400 hover:text-red-400 transition-colors"
+          title="Delete"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    )}
   </div>
 );
 
