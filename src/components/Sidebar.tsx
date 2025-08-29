@@ -74,76 +74,60 @@ const Sidebar: React.FC<SidebarProps> = ({
     window.location.reload();
   };
 
-  // If sidebar is collapsed, show only minimal icons
+  // Clean collapsed sidebar - only essential buttons, no numbered chats
   if (isCollapsed) {
     return (
       <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-16 items-center">
-        {/* Header - Collapsed with better logo visibility */}
+        {/* Header - Collapsed */}
         <div className="p-3 border-b border-gray-700 flex flex-col items-center space-y-4 w-full">
           <div className="cursor-pointer p-2 hover:bg-gray-700 rounded-lg transition-colors" onClick={handleLogoClick}>
             <img
-              src="/images/lANDAilogo2.png"
+              src="/images/pin.png"
               alt="LANDAI Logo"
-              className="h-10 w-10 object-contain transition duration-200 hover:opacity-80"
+              className="h-8 w-8 object-contain transition duration-200 hover:opacity-80"
             />
           </div>
-         
+        </div>
+
+        {/* Action buttons - Collapsed */}
+        <div className="flex flex-col items-center space-y-3 py-4 w-full">
           <button
-            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors w-10 h-10 flex items-center justify-center"
+            className="p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors w-12 h-12 flex items-center justify-center group relative"
             onClick={onGoHome}
             title="Home"
           >
-            <Home className="w-4 h-4" />
+            <Home className="w-5 h-5" />
           </button>
          
           <button
-            className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors w-10 h-10 flex items-center justify-center"
+            className="p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors w-12 h-12 flex items-center justify-center"
             onClick={onNewChat}
             title="New Chat"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
           </button>
          
-          <button
-            className="p-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors w-10 h-10 flex items-center justify-center"
-            onClick={onSearchChats}
-            title="Search Chats"
-          >
-            <Search className="w-4 h-4" />
-          </button>
+          {chats.length > 0 && (
+            <button
+              className="p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors w-12 h-12 flex items-center justify-center relative"
+              onClick={onSearchChats}
+              title="Search Chats"
+            >
+              <Search className="w-5 h-5" />
+              {chats.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                </span>
+              )}
+            </button>
+          )}
         </div>
-
-        {/* Chat List Preview - Collapsed */}
-        {isLoggedIn && chats.length > 0 && (
-          <div className="flex-1 py-2 flex flex-col items-center space-y-2 overflow-hidden">
-            {chats.slice(0, 8).map((chat, index) => (
-              <button
-                key={chat.id}
-                onClick={() => onChatSelect(chat.id)}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${
-                  activeChat === chat.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-                title={chat.title}
-              >
-                {index + 1}
-              </button>
-            ))}
-            {chats.length > 8 && (
-              <div className="w-10 h-6 rounded-lg bg-gray-800 flex items-center justify-center text-xs text-gray-400">
-                +{chats.length - 8}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Footer with user profile - Collapsed */}
         <div className="mt-auto p-3 border-t border-gray-700 flex flex-col items-center space-y-3 w-full">
           {(isLoggedIn || userInitial) && (
             <div
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg"
-              title={userName || 'Guest User'}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg cursor-pointer hover:scale-105 transition-transform"
+            
             >
               {userInitial}
             </div>
@@ -176,7 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <img
-              src="/images/lANDAilogo2.png"
+              src="/images/pin.png"
               alt="LANDAI Logo"
               className="h-12 w-auto object-contain cursor-pointer transition duration-200 hover:opacity-80"
               onClick={handleLogoClick}
@@ -283,7 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onTogglePin={() => togglePin(chat.id)}
               onDelete={() => deleteChat(chat.id)}
               isGuest={true}
-              showActions={true} // Enable actions for guest users too
+              showActions={true}
             />
           ))}
           {chats.length > 3 && (
@@ -294,7 +278,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Footer with user profile - Fixed at bottom */}
+      {/* Footer with user profile - Full view */}
       <div className="mt-auto p-3 border-t border-gray-700">
         {(isLoggedIn || userInitial) ? (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#2b2c33] to-[#323340] border border-gray-600/50">
@@ -306,7 +290,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {userName || 'Guest User'}
               </p>
               <p className="text-xs text-gray-400">
-                {isLoggedIn ? 'Free Plan' : 'Guest Mode'}
+                {isLoggedIn ? 'Test Mode' : 'Test Mode'}
               </p>
             </div>
             {isLoggedIn && (
@@ -367,7 +351,6 @@ const ChatRow = ({
       </p>
     </div>
    
-    {/* Always show actions on hover, even for guest users */}
     {showActions && (
       <div className="flex opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
         <button

@@ -60,6 +60,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     const name = localStorage.getItem('user_name');
     const savedGuestName = localStorage.getItem('guest_name');
     const plan = localStorage.getItem('user_plan');
+    const savedView = localStorage.getItem('currentView') as 'home' | 'chat' | null;
     
     setIsLoggedIn(!!token);
     
@@ -82,8 +83,17 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     const conversations = conversationManager.getConversations();
     if (conversations.length > 0) {
       setHasStartedChatting(true);
+      // Restore the saved view or default to chat if conversations exist
+      setCurrentView(savedView || 'chat');
+    } else if (savedView) {
+      setCurrentView(savedView);
     }
   }, []);
+
+  useEffect(() => {
+    // Save current view to localStorage whenever it changes
+    localStorage.setItem('currentView', currentView);
+  }, [currentView]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -208,15 +218,25 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       const data = await loginUser(email, password);
       localStorage.setItem('access_token', data.access_token);
      
-      // Generate a unique display name for logged in users
-      const displayName = (data as any).name || `User${Math.floor(Math.random() * 1000)}`;
-      localStorage.setItem('user_name', displayName);
-      localStorage.setItem('user_plan', 'Pro'); // Set plan for logged in users
+      // Only use the actual name from the API response
+      const displayName = (data as any).name;
+      
+      if (displayName) {
+        localStorage.setItem('user_name', displayName);
+        setUserName(displayName);
+        setUserInitial(displayName.charAt(0).toUpperCase());
+      } else {
+        // Use email prefix as fallback
+        const emailName = email.split('@')[0];
+        localStorage.setItem('user_name', emailName);
+        setUserName(emailName);
+        setUserInitial(emailName.charAt(0).toUpperCase());
+      }
+      
+      localStorage.setItem('user_plan', 'Pro');
       
       setIsLoggedIn(true);
       setShowLoginModal(false);
-      setUserInitial(displayName.charAt(0).toUpperCase());
-      setUserName(displayName);
       setUserPlan('Pro');
       setSearchCount(0); // Reset search count for logged in users
     } catch (err: any) {
@@ -353,6 +373,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     localStorage.removeItem('user_name');
     localStorage.removeItem('user_plan');
     localStorage.removeItem('guest_name');
+    localStorage.removeItem('currentView');
     setIsLoggedIn(false);
     setMessages([]);
     setCurrentView('home');
@@ -452,10 +473,9 @@ const renderFeedbackButton = () => {
         {hasStartedChatting && (
           <div className="mb-6">
             <img
-              src="/images/lANDAilogo2.png"
+              src="/images/lANDAi.png"
               alt="LANDAi Logo"
-              className="h-16 w-auto mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={goToHome}
+              className="h-16 w-auto mx-auto"
             />
           </div>
         )}
@@ -463,18 +483,17 @@ const renderFeedbackButton = () => {
         {!hasStartedChatting && (
           <div className="mb-8">
             <img
-              src="/images/lANDAilogo2.png"
+              src="/images/lANDAi.png"    
               alt="LANDAi Logo"
-              className="h-20 w-auto mx-auto cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={goToHome}
+              className="h-20 w-auto mx-auto"
             />
           </div>
         )}
        
-        <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-6 text-center leading-tight">
           Everything you need <br />to know about land in Ghana<br />
         </h1>
-        <p className="text-gray-300 text-base md:text-lg mb-6 md:mb-8 text-center">How can I help you today?</p>
+        <p className="text-gray-300 text-lg md:text-xl mb-8 md:mb-10 text-center max-w-2xl leading-relaxed">How can I help you today?</p>
        
         <div className="relative w-full max-w-md mb-6 md:mb-8">
           <input
@@ -538,10 +557,13 @@ const renderFeedbackButton = () => {
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
-        {renderAuthDropdown()}
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+      {/* Only show auth dropdown when sidebar is collapsed or not visible */}
+      {(!hasStartedChatting || !isSidebarOpen) && (
+        <div className="flex justify-end items-center p-4 border-b border-gray-700/50">
+          {renderAuthDropdown()}
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -560,7 +582,7 @@ const renderFeedbackButton = () => {
             )}
             <div className="flex flex-col gap-1">
               <div
-                className={`rounded-xl p-4 max-w-2xl ${
+                className={`rounded-xl p-5 max-w-2xl shadow-lg ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
                     : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
@@ -576,8 +598,71 @@ const renderFeedbackButton = () => {
                     <span className="text-xs text-gray-400">Generating...</span>
                   </div>
                 ) : (
-                  <div className="prose prose-invert text-sm leading-relaxed max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <div className="prose prose-invert max-w-none text-gray-100">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => (
+                          <p className="mb-4 text-base leading-7 text-gray-100">{children}</p>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="text-2xl font-bold mb-4 text-white">{children}</h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="text-xl font-semibold mb-3 text-white">{children}</h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="text-lg font-medium mb-2 text-white">{children}</h3>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="mb-4 pl-6 space-y-2">{children}</ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="mb-4 pl-6 space-y-2">{children}</ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="text-base leading-6 text-gray-100">{children}</li>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-white">{children}</strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic text-gray-200">{children}</em>
+                        ),
+                        code: ({ children }) => (
+                          <code className="bg-gray-800 px-2 py-1 rounded text-sm font-mono text-blue-300 border border-gray-600">
+                            {children}
+                          </code>
+                        ),
+                        pre: ({ children }) => (
+                          <pre className="bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto border border-gray-600">
+                            <code className="text-sm font-mono text-gray-200">{children}</code>
+                          </pre>
+                        ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-gray-800/30 rounded-r-lg">
+                            <div className="text-gray-200 italic">{children}</div>
+                          </blockquote>
+                        ),
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto mb-4">
+                            <table className="min-w-full border border-gray-600 rounded-lg overflow-hidden">
+                              {children}
+                            </table>
+                          </div>
+                        ),
+                        th: ({ children }) => (
+                          <th className="bg-gray-700 px-4 py-2 text-left font-semibold text-white border-b border-gray-600">
+                            {children}
+                          </th>
+                        ),
+                        td: ({ children }) => (
+                          <td className="px-4 py-2 text-gray-100 border-b border-gray-700 last:border-b-0">
+                            {children}
+                          </td>
+                        ),
+                      }}
+                    >
                       {msg.text}
                     </ReactMarkdown>
                   </div>
