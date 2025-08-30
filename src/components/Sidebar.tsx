@@ -145,13 +145,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   }
 
-  // Full sidebar view
+  // Full sidebar view with centered content
   return (
-    <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-64">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
+    <div className="h-full bg-[#1e1f24] border-r border-gray-700 flex flex-col w-64 items-center">
+      {/* Header - Centered */}
+      <div className="p-4 border-b border-gray-700 w-full flex flex-col items-center">
+        <div className="flex items-center justify-between mb-4 w-full max-w-[90%]">
+          <div className="flex items-center justify-center flex-1">
             {isLoading ? (
               <div className="flex items-center gap-2 animate-pulse">
                 <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
@@ -175,11 +175,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-2">
+        {/* Action Buttons - Centered */}
+        <div className="space-y-2 w-full flex flex-col items-center">
           <Button
             variant="ghost"
-            className="w-full text-gray-300 hover:bg-blue-600 hover:text-white mb-2 justify-start"
+            className="w-[90%] text-gray-300 hover:bg-blue-600 hover:text-white mb-2 justify-start"
             onClick={onGoHome}
           >
             <Home className="w-4 h-4 mr-2" />
@@ -187,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </Button>
 
           <Button
-            className="w-full bg-gray-700 hover:bg-gray-600 text-white mb-2 justify-start"
+            className="w-[90%] bg-gray-700 hover:bg-gray-600 text-white mb-2 justify-start"
             onClick={onNewChat}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -196,7 +196,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <Button
             variant="ghost"
-            className="w-full text-gray-300 hover:bg-gray-700 mb-2 justify-start"
+            className="w-[90%] text-gray-300 hover:bg-gray-700 mb-2 justify-start"
             onClick={onSearchChats}
           >
             <Search className="w-4 h-4 mr-2" />
@@ -205,20 +205,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Chat List (only if logged in) */}
+      {/* Chat List (only if logged in) - Centered */}
       {isLoggedIn && (
-        <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto px-2 py-3 w-full flex flex-col items-center">
           {chats.length === 0 ? (
-            <div className="text-center text-gray-400 text-sm py-8">
+            <div className="text-center text-gray-400 text-sm py-8 w-full">
               <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No conversations yet</p>
               <p className="text-xs">Start a new chat to begin</p>
             </div>
           ) : (
-            <>
+            <div className="w-full max-w-[90%]">
               {pinnedChats.length > 0 && (
                 <>
-                  <div className="text-xs text-gray-400 px-2 mb-2 flex items-center font-medium">
+                  <div className="text-xs text-gray-400 mb-2 flex items-center justify-center font-medium">
                     <Pin className="w-3 h-3 mr-1" />
                     Pinned
                   </div>
@@ -237,7 +237,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
               {unpinnedChats.length > 0 && (
                 <>
-                  <div className="text-xs text-gray-400 px-2 mt-4 mb-2 flex items-center font-medium">
+                  <div className="text-xs text-gray-400 mt-4 mb-2 flex items-center justify-center font-medium">
                     <History className="w-3 h-3 mr-1" />
                     Recent
                   </div>
@@ -253,50 +253,52 @@ const Sidebar: React.FC<SidebarProps> = ({
                   ))}
                 </>
               )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Guest user chat preview with pin/delete functionality */}
-      {!isLoggedIn && chats.length > 0 && (
-        <div className="flex-1 overflow-y-auto px-2 py-3">
-          <div className="text-xs text-gray-400 px-2 mb-2 flex items-center font-medium">
-            <History className="w-3 h-3 mr-1" />
-            Current Session
-          </div>
-          {chats.slice(0, 3).map((chat) => (
-            <ChatRow
-              key={chat.id}
-              chat={chat}
-              isActive={activeChat === chat.id}
-              onClick={() => onChatSelect(chat.id)}
-              onTogglePin={() => togglePin(chat.id)}
-              onDelete={() => deleteChat(chat.id)}
-              isGuest={true}
-              showActions={true}
-            />
-          ))}
-          {chats.length > 3 && (
-            <div className="px-2 py-1 text-xs text-gray-500 text-center">
-              +{chats.length - 3} more chats
             </div>
           )}
         </div>
       )}
 
-      {/* Footer with user profile - Full view */}
-      <div className="mt-auto p-3 border-t border-gray-700">
+      {/* Guest user chat preview with pin/delete functionality - Centered */}
+      {!isLoggedIn && chats.length > 0 && (
+        <div className="flex-1 overflow-y-auto px-2 py-3 w-full flex flex-col items-center">
+          <div className="text-xs text-gray-400 mb-2 flex items-center justify-center font-medium w-full max-w-[90%]">
+            <History className="w-3 h-3 mr-1" />
+            Current Session
+          </div>
+          <div className="w-full max-w-[90%]">
+            {chats.slice(0, 3).map((chat) => (
+              <ChatRow
+                key={chat.id}
+                chat={chat}
+                isActive={activeChat === chat.id}
+                onClick={() => onChatSelect(chat.id)}
+                onTogglePin={() => togglePin(chat.id)}
+                onDelete={() => deleteChat(chat.id)}
+                isGuest={true}
+                showActions={true}
+              />
+            ))}
+            {chats.length > 3 && (
+              <div className="py-1 text-xs text-gray-500 text-center">
+                +{chats.length - 3} more chats
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer with user profile - Full view - Centered */}
+      <div className="mt-auto p-3 border-t border-gray-700 w-full flex flex-col items-center">
         {(isLoggedIn || userInitial) ? (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#2b2c33] to-[#323340] border border-gray-600/50">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#2b2c33] to-[#323340] border border-gray-600/50 w-[90%]">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg flex-shrink-0">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-white truncate text-center">
                 {userName || 'Guest User'}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 text-center">
                 Beta Test
               </p>
             </div>
@@ -311,7 +313,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
         ) : (
-          <div className="text-center text-gray-400 text-sm py-4">
+          <div className="text-center text-gray-400 text-sm py-4 w-full">
             <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-xs">Sign in to save your chats</p>
           </div>
@@ -388,5 +390,5 @@ const ChatRow = ({
     )}
   </div>
 );
- 
+
 export default Sidebar;

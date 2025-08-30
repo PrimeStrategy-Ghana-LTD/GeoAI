@@ -14,15 +14,16 @@ export default function GoogleForm({ onClose }) {
             &times;
           </button>
         </div>
-        <div className="flex-1 overflow-auto p-2">
+        <div className="flex-1 overflow-hidden"> {/* Changed from overflow-auto to overflow-hidden */}
           <iframe
-            src="https://docs.google.com/forms/d/e/1FAIpQLSdFgEILxhppb_GRV-T7LUsmLmHr1tbCavz-v8xgeEVwC-U3CA/viewform?embedded=true"
+            src="https://docs.google.com/forms/d/e/1FAIpQLSd5jMTQNL4Cxw9pB3X8BM-ShZqEjcn9kwRkTy1SvGyIzcOsSQ/viewform?embedded=true"
             width="100%"
-            height="700"
+            height="100%" /* Changed from fixed height to 100% */
             frameBorder="0"
             marginHeight="0"
             marginWidth="0"
             className="rounded-lg"
+            style={{ minHeight: '600px' }} /* Added min-height for smaller screens */
           >
             Loading…
           </iframe>
