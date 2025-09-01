@@ -18,7 +18,6 @@ const FloatingFeedbackButton = ({ onClick }) => {
       onClick={onClick}
       className="fixed right-6 bottom-6 z-40 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 animate-pulse animate-infinite"
       title="Give Feedback"
-      style={{ bottom: `calc(1.5rem + var(--safe-area-inset-bottom))` }}
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -161,34 +160,6 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     return () => window.removeEventListener('toggleSidebar', handleToggleSidebar);
   }, []);
 
-  // Mobile viewport handling
-  useEffect(() => {
-    const handleViewportChange = () => {
-      // Handle mobile viewport changes
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-
-    const handleResize = () => {
-      handleViewportChange();
-      // Force scroll to bottom when keyboard appears/disappears
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleViewportChange);
-    
-    // Set initial viewport height
-    handleViewportChange();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleViewportChange);
-    };
-  }, []);
-
   // Save state whenever important state changes
   useEffect(() => {
     if (hasStartedChatting) {
@@ -222,15 +193,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   }, [showDropdown]);
 
   useEffect(() => {
-    // Scroll to bottom with proper timing for mobile
-    const scrollTimer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'end'
-      });
-    }, 100);
-    
-    return () => clearTimeout(scrollTimer);
+    scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
@@ -541,20 +504,19 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     );
   };
 
-  const renderHomeContent = () => (
-    <div className="flex flex-col h-screen-mobile bg-[#1e1f24] items-center justify-center overflow-hidden">
-      {/* Back to Chat Button - only show if user has chats AND is logged in */}
-      {(hasStartedChatting && currentView === 'home' && isLoggedIn && activeChat) && (
-        <button
-          onClick={goBackToChat}
-          className="fixed left-4 top-4 z-50 p-3 rounded-full bg-[#2b2c33] hover:bg-[#3b3c44] border border-gray-600 transition-all flex items-center gap-2 text-blue-400 hover:text-blue-300"
-          title="Back to Chat"
-          style={{ top: `calc(1rem + var(--safe-area-inset-top))` }}
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="hidden sm:inline text-sm">Back to Chat</span>
-        </button>
-      )}
+ const renderHomeContent = () => (
+  <div className="flex flex-col h-full bg-[#1e1f24] items-center justify-center">
+    {/* Back to Chat Button - only show if user has chats AND is logged in */}
+    {(hasStartedChatting && currentView === 'home' && isLoggedIn && activeChat) && (
+      <button
+        onClick={goBackToChat}
+        className="fixed left-4 top-4 z-50 p-3 rounded-full bg-[#2b2c33] hover:bg-[#3b3c44] border border-gray-600 transition-all flex items-center gap-2 text-blue-400 hover:text-blue-300"
+        title="Back to Chat"
+      >
+        <ArrowLeft className="h-5 w-5" />
+        <span className="hidden sm:inline text-sm">Back to Chat</span>
+      </button>
+    )}
 
       <div className="flex justify-end items-center p-4 border-b border-gray-700/50 w-full">
         {renderAuthDropdown()}
@@ -648,8 +610,8 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   );
 
   const renderChatContent = () => (
-    <div className="flex flex-col h-screen-mobile bg-[#1e1f24] overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar min-h-0">
+    <div className="flex flex-col h-full bg-[#1e1f24]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -814,8 +776,8 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         </div>
       )}
 
-      {/* Chat input with mobile safe area */}
-      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent safe-bottom">
+      {/* Chat input - cleaned up without feedback button */}
+      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
         <div className="relative max-w-3xl mx-auto">
           <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
             <img
@@ -857,7 +819,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   );
 
   return (
-    <div className="flex h-screen-mobile bg-[#1e1f24] text-white overflow-hidden">
+    <div className="flex h-screen bg-[#1e1f24] text-white">
       {/* Sidebar - Only show when in chat mode or when logged in */}
       {hasStartedChatting && currentView === 'chat' && (
         <div className={`relative transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16'}`}>
@@ -901,7 +863,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col">
         {currentView === 'home' ? renderHomeContent() : renderChatContent()}
       </div>
       

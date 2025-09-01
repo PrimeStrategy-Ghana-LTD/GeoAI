@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 
 interface SignupModalProps {
   onClose: () => void;
@@ -23,10 +23,11 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const [name, setName] = useState(initialValues.name);
   const [email, setEmail] = useState(initialValues.email);
   const [password, setPassword] = useState(initialValues.password);
+  const [showPassword, setShowPassword] = useState(false); // 👈 new state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'email' | 'social'>('email');
-  const [socialLoading, setSocialLoading] = useState<'google'|'microsoft'|'apple'|null>(null);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'microsoft' | 'apple' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +60,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
     try {
       const backendUrl = 'https://nomar.up.railway.app';
       const authUrl = `${backendUrl}/auth/${provider}`;
-      
+
       sessionStorage.setItem('preAuthRoute', window.location.pathname);
       window.location.href = authUrl;
     } catch (err) {
@@ -81,7 +82,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
         </button>
 
         <div className="flex flex-col md:flex-row">
-          <div 
+          <div
             className="hidden md:block md:w-1/2 p-8 relative overflow-hidden"
             style={{
               backgroundImage: "url('/images/lANDAibg.jpg')",
@@ -93,14 +94,14 @@ const SignupModal: React.FC<SignupModalProps> = ({
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
 
             <div className="relative z-10 h-full flex flex-col justify-center items-center">
-              <img 
-                src="/images/Vector.svg" 
-                alt="Logo" 
+              <img
+                src="/images/Vector.svg"
+                alt="Logo"
                 className="w-16 h-16 mb-6 object-contain"
               />
               <h2 className="text-2xl font-bold text-white mb-2">Welcome to LandAI</h2>
               <p className="text-gray-200 text-center max-w-xs">
-               Join thousands of users in Exploring, analyzing, and planning smarter with LandAI 
+                Join thousands of users in Exploring, analyzing, and planning smarter with LandAI
               </p>
             </div>
           </div>
@@ -157,14 +158,30 @@ const SignupModal: React.FC<SignupModalProps> = ({
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-[#3b3c44] border-gray-700 text-white"
                   />
-                  <Input
-                    id="password"
-                    placeholder="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-[#3b3c44] border-gray-700 text-white"
-                  />
+
+                  {/* 👇 password with eye toggle */}
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      placeholder="Password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-[#3b3c44] border-gray-700 text-white pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+
                   <p className="text-xs text-gray-500 mt-1">
                     Must be 8+ characters with uppercase, lowercase, and a number
                   </p>
@@ -184,6 +201,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
               </>
             ) : (
               <div className="space-y-4">
+                {/* social buttons unchanged */}
                 <Button
                   onClick={() => handleSocialLogin('google')}
                   className="w-full flex items-center justify-center gap-3 bg-white text-black font-medium py-3 hover:opacity-90 transition"
@@ -194,14 +212,10 @@ const SignupModal: React.FC<SignupModalProps> = ({
                   ) : (
                     <>
                       <div className="w-5 h-5 flex items-center justify-center">
-                        <img 
-                          src="/images/google-icon.jpeg" 
-                          alt="Google" 
+                        <img
+                          src="/images/google-icon.jpeg"
+                          alt="Google"
                           className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTIyLjU2IDEyLjI1YzAtLjc4LS4wNy0xLjUzLS4yLTIuMjVIMTIvNC4yN2MxLjU0LjAyIDIuOTguNTggNC4wNCAxLjU0bDIuODMtMi44M2EzLjk5IDMuOTkgMCAwIDEgNi4zOSAxLjI1bDIuNjggMi4wOGE5Ljk5IDkuOTkgMCAwIDEgLjYyIDMuODV6IiBmaWxsPSIjRUE0MzM1Ii8+PHBhdGggZD0iTTEyIDMuOTljLTIuNzQgMC01LjEuMS03LjA1LjhhOS45NCA5Ljk0IDAgMCAwLTQuMDkgMi4xOGwtMi44MyAyLjgzQTEwIDEwIDAgMCAwIDEyIDIyYzIuNzQgMCA1LjEtLjEgNy4wNS0uOGE5Ljk0IDkuOTkgMCAwIDAgNC4wOS0yLjE4bDIuODMtMi44M0ExMCAxMCAwIDAgMCAxMiAzLjk5eiIgZmlsbD0iIzM0QTg1MyIvPjxwYXRoIGQ9Ik0xMiAzLjk5YzEuNTQgMCAyLjk4LjU4IDQuMDQgMS41NGwyLjgzLTIuODNhMy45OSAzLjk5IDAgMCAxIDYuMzkgMS4yNWwyLjY4IDIuMDhhOS45OSA5Ljk5IDAgMCAxIC62MiAzLjg1YzAtLjc4LS4wNy0xLjUzLS4yLTIuMjVIMTJWMy45OXoiIGZpbGw9IiNGQkJDMjQiLz48cGF0aCBkPSJNMTIgMTIuMjVoNS43NWE1LjI1IDUuMjUgMCAwIDEtLjM4IDEuODhsLS4wNi4xMy0yLjgzIDIuODNjLS4yNi4yNi0uNTQuNDktLj83LjY4QTEwIDEwIDAgMCAxIDEyIDMuOTl2OC4yNnoiIGZpbGw9IjQyODVGNCIvPjwvc3ZnPg==';
-                          }}
                         />
                       </div>
                       Continue with Google

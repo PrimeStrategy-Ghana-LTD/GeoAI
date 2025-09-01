@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, UserPlus, LogIn, Loader2 } from 'lucide-react';
+import { X, UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -25,6 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [socialLoading, setSocialLoading] = useState<'google'|'microsoft'|'apple'|null>(null);
+  const [showPassword, setShowPassword] = useState(false); // 👈 added
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +82,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
               backgroundPosition: 'center'
             }}
           >
-            {/* Overlay for better text readability */}
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
             
             <div className="relative z-10 h-full flex flex-col justify-center items-center">
@@ -132,15 +132,28 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 <label htmlFor="login-password" className="block text-sm font-medium text-gray-300 mb-1">
                   Password
                 </label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-[#3b3c44] border-gray-700 text-white"
-                  autoComplete="current-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-[#3b3c44] border-gray-700 text-white pr-10"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <Button
@@ -159,6 +172,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Social login buttons remain unchanged */}
+              {/* Google */}
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
@@ -173,14 +188,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
                       src="/images/google-icon.jpeg" 
                       alt="Google" 
                       className="w-full h-full object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTIyLjU2IDEyLjI1YzAtLjc4LS4wNy0xLjUzLS4yLTIuMjVIMTIvNC4yN2MxLjU0LjAyIDIuOTguNTggNC4wNCAxLjU0bDIuODMtMi44M2EzLjk5IDMuOTkgMCAwIDEgNi4zOSAxLjI1bDIuNjggMi42OGE5Ljk5IDkuOTkgMCAwIDEgLjYyIDMuODV6IiBmaWxsPSIjRUE0MzM1Ii8+PHBhdGggZD0iTTEyIDMuOTljLTIuNzQgMC01LjEuMS03LjA1LjhhOS45NCA5Ljk0IDAgMCAwLTQuMDkgMi4xOGwtMi44MyAyLjgzQTEwIDEwIDAgMCAwIDEyIDIyYzIuNzQgMCA1LjEtLjEgNy4wNS0uOGE5Ljk0IDkuOTQgMCAwIDAgNC4wOS0yLjE4bDIuODMtMi44M0ExMCAxMCAwIDAgMCAxMiAzLjk5eiIgZmlsbD0iIzM0QTg1MyIvPjxwYXRoIGQ9Ik0xMiAzLjk5YzEuNTQgMCAyLjk4LjU4IDQuMDQgMS41NGwyLjgzLTIuODNhMy45OSAzLjk5IDAgMCAxIDYuMzkgMS4yNWwyLjY4IDIuMDhhOS45OSA5Ljk5IDAgMCAxIC42MiAzLjg1YzAtLjc4LS4wNy0xLjUzLS4yLTIuMjVIMTJWMy45OXoiIGZpbGw9IiNGQkJDMjQiLz48cGF0aCBkPSJNMTIgMTIuMjVoNS43NWE1LjI1IDUuMjUgMCAwIDEtLjM4IDEuODhsLS4wNi4xMy0yLjgzIDIuODNjLS4yNi4yNi0uNTQuNDktLjgzLjY4QTEwIDEwIDAgMCAxIDEyIDMuOTl2OC4yNnoiIGZpbGw9IjQyODVGNCIvPjwvc3ZnPg==';
-                      }}
                     />
                   </div>
                 )}
               </Button>
+              {/* Microsoft */}
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
@@ -193,6 +205,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-4 h-4" />
                 )}
               </Button>
+              {/* Apple */}
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
