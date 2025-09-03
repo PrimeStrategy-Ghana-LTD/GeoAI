@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Index from "./pages/Index";
 import SearchChats from "./pages/SearchChats";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
+
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/search-chats" element={<SearchChats />} />
+             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -25,7 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [socialLoading, setSocialLoading] = useState<'google'|'microsoft'|'apple'|null>(null);
-  const [showPassword, setShowPassword] = useState(false); // 👈 added
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +47,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
+    // Don't proceed if provider is not configured
+    if (provider !== 'google') {
+      setError(`${provider} login is not available yet`);
+      return;
+    }
+
     setSocialLoading(provider);
     setError('');
     try {
@@ -172,7 +178,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-4">
-              {/* Social login buttons remain unchanged */}
               {/* Google */}
               <Button
                 variant="outline"
@@ -192,31 +197,23 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   </div>
                 )}
               </Button>
-              {/* Microsoft */}
+              
+              {/* Microsoft - Disabled */}
               <Button
                 variant="outline"
-                className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
-                onClick={() => handleSocialLogin('microsoft')}
-                disabled={!!socialLoading}
+                className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 text-gray-500 opacity-50 cursor-not-allowed"
+                disabled={true}
               >
-                {socialLoading === 'microsoft' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-4 h-4" />
-                )}
+                <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-4 h-4" />
               </Button>
-              {/* Apple */}
+              
+              {/* Apple - Disabled */}
               <Button
                 variant="outline"
-                className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 hover:bg-gray-700"
-                onClick={() => handleSocialLogin('apple')}
-                disabled={!!socialLoading}
+                className="flex items-center justify-center gap-2 bg-[#3b3c44] border-gray-700 text-gray-500 opacity-50 cursor-not-allowed"
+                disabled={true}
               >
-                {socialLoading === 'apple' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <img src="/images/apple-icon.png" alt="Apple" className="w-4 h-4" />
-                )}
+                <img src="/images/apple-icon.png" alt="Apple" className="w-4 h-4" />
               </Button>
             </div>
 

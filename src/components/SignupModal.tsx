@@ -23,7 +23,7 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const [name, setName] = useState(initialValues.name);
   const [email, setEmail] = useState(initialValues.email);
   const [password, setPassword] = useState(initialValues.password);
-  const [showPassword, setShowPassword] = useState(false); // 👈 new state
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'email' | 'social'>('email');
@@ -55,6 +55,12 @@ const SignupModal: React.FC<SignupModalProps> = ({
   };
 
   const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
+    // Don't proceed if provider is not configured
+    if (provider !== 'google') {
+      setError(`${provider} login is not available yet`);
+      return;
+    }
+
     setSocialLoading(provider);
     setError('');
     try {
@@ -90,7 +96,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
               backgroundPosition: 'center'
             }}
           >
-            {/* Overlay for better text readability */}
             <div className="absolute inset-0 bg-black bg-opacity-40"></div>
 
             <div className="relative z-10 h-full flex flex-col justify-center items-center">
@@ -159,7 +164,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
                     className="bg-[#3b3c44] border-gray-700 text-white"
                   />
 
-                  {/* 👇 password with eye toggle */}
                   <div className="relative">
                     <Input
                       id="password"
@@ -201,7 +205,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
               </>
             ) : (
               <div className="space-y-4">
-                {/* social buttons unchanged */}
                 <Button
                   onClick={() => handleSocialLogin('google')}
                   className="w-full flex items-center justify-center gap-3 bg-white text-black font-medium py-3 hover:opacity-90 transition"
@@ -222,33 +225,23 @@ const SignupModal: React.FC<SignupModalProps> = ({
                     </>
                   )}
                 </Button>
+                
+                {/* Disabled Microsoft Button */}
                 <Button
-                  onClick={() => handleSocialLogin('microsoft')}
-                  className="w-full flex items-center justify-center gap-3 bg-[#f3f3f3] text-black font-medium py-3 hover:opacity-90 transition"
-                  disabled={!!socialLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#f3f3f3] text-gray-500 font-medium py-3 opacity-50 cursor-not-allowed"
+                  disabled={true}
                 >
-                  {socialLoading === 'microsoft' ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-5 h-5" />
-                      Continue with Microsoft
-                    </>
-                  )}
+                  <img src="/images/microsoft-icon.png" alt="Microsoft" className="w-5 h-5" />
+                  Continue with Microsoft (Coming Soon)
                 </Button>
+                
+                {/* Disabled Apple Button */}
                 <Button
-                  onClick={() => handleSocialLogin('apple')}
-                  className="w-full flex items-center justify-center gap-3 bg-black text-white font-medium py-3 hover:opacity-90 transition"
-                  disabled={!!socialLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-black text-gray-500 font-medium py-3 opacity-50 cursor-not-allowed"
+                  disabled={true}
                 >
-                  {socialLoading === 'apple' ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <img src="/images/apple-icon.png" alt="Apple" className="w-5 h-5" />
-                      Continue with Apple
-                    </>
-                  )}
+                  <img src="/images/apple-icon.png" alt="Apple" className="w-5 h-5" />
+                  Continue with Apple (Coming Soon)
                 </Button>
 
                 <div className="text-center text-xs text-gray-500 mt-4">
