@@ -11,6 +11,16 @@ import GoogleForm from './GoogleForm';
 import { loginUser, signupUser } from '@/services/authService';
 import { conversationManager } from '@/lib/ConversationManager';
 
+// Beta Test Badge Component
+const LANDAiBetaBadge = () => (
+  <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[60]">
+    <div className="bg-white/95 backdrop-blur-sm text-gray-700 px-5 py-2.5 rounded-full text-sm font-medium border border-gray-200 shadow-lg cursor-default flex items-center gap-2.5 transition-all duration-200 hover:shadow-xl">
+      <img src="/images/Vector.svg" alt="" className="w-3.5 h-3.5 opacity-70" />
+      <span className="font-medium">Beta Test</span>
+    </div>
+  </div>
+);
+
 // Floating Feedback Button Component with animation
 const FloatingFeedbackButton = ({ onClick }) => {
   return (
@@ -866,6 +876,9 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       <div className="flex-1 flex flex-col">
         {currentView === 'home' ? renderHomeContent() : renderChatContent()}
       </div>
+      
+      {/* Beta Test Badge - Always visible */}
+      <LANDAiBetaBadge />
       
       {/* Floating Feedback Button - Always visible */}
       <FloatingFeedbackButton onClick={openFeedbackForm} />
