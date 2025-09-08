@@ -877,8 +877,8 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         {currentView === 'home' ? renderHomeContent() : renderChatContent()}
       </div>
       
-      {/* Beta Test Badge - Always visible */}
-      <LANDAiBetaBadge />
+      {/* Beta Test Badge - Only show on home page */}
+      {currentView === 'home' && <LANDAiBetaBadge />}
       
       {/* Floating Feedback Button - Always visible */}
       <FloatingFeedbackButton onClick={openFeedbackForm} />
