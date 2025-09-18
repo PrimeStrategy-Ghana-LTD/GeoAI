@@ -11,25 +11,44 @@ import GoogleForm from './GoogleForm';
 import { loginUser, signupUser } from '@/services/authService';
 import { conversationManager } from '@/lib/ConversationManager';
 
-// Beta Test Badge Component
+// Improved Responsive Beta Test Badge Component
 const LANDAiBetaBadge = () => (
-  <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[60]">
-    <div className="bg-white/95 backdrop-blur-sm text-gray-700 px-5 py-2.5 rounded-full text-sm font-medium border border-gray-200 shadow-lg cursor-default flex items-center gap-2.5 transition-all duration-200 hover:shadow-xl">
-      <img src="/images/Vector.svg" alt="" className="w-3.5 h-3.5 opacity-70" />
-      <span className="font-medium">Beta Test</span>
+  <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] 
+                  lg:top-4 
+                  md:top-3 
+                  sm:top-2">
+    <div className="bg-white/95 backdrop-blur-sm text-gray-700 
+                    px-4 py-2 rounded-full text-sm font-medium 
+                    border border-gray-200 shadow-lg cursor-default 
+                    flex items-center gap-2 transition-all duration-200 hover:shadow-xl
+                    lg:px-4 lg:py-2 lg:text-sm
+                    md:px-3 md:py-1.5 md:text-xs
+                    sm:px-2.5 sm:py-1 sm:text-xs
+                    xs:px-2 xs:py-0.5 xs:text-xs">
+      <img src="/images/Vector.svg" alt="" className="opacity-70 
+                                                      lg:w-3.5 lg:h-3.5
+                                                      md:w-3 md:h-3
+                                                      sm:w-2.5 sm:h-2.5" />
+      <span className="font-medium whitespace-nowrap">Beta Test</span>
     </div>
   </div>
 );
 
-// Floating Feedback Button Component with animation
+// Floating Feedback Button Component with improved responsive positioning
 const FloatingFeedbackButton = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="fixed right-6 bottom-6 z-40 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 animate-pulse animate-infinite"
+      className="fixed right-4 bottom-4 z-40 
+                 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white 
+                 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 
+                 transition-all transform hover:scale-105 
+                 lg:right-6 lg:bottom-6 lg:p-3
+                 md:right-4 md:bottom-4 md:p-2.5
+                 sm:right-3 sm:bottom-3 sm:p-2"
       title="Give Feedback"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-4 md:w-4 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     </button>
@@ -497,16 +516,16 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     if (currentView !== 'home' || isLoggedIn) return null;
     
     return (
-      <div className="flex gap-4">
+      <div className="flex gap-2 md:gap-4">
         <button
           onClick={() => setShowLoginModal(true)}
-          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
+          className="px-3 py-2 md:px-4 md:py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-xs md:text-sm hover:bg-blue-500 hover:text-white transition-all"
         >
           Login
         </button>
         <button
           onClick={() => setShowSignupModal(true)}
-          className="px-4 py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-sm hover:bg-blue-500 hover:text-white transition-all"
+          className="px-3 py-2 md:px-4 md:py-2 border border-blue-500 rounded-full text-blue-400 font-semibold text-xs md:text-sm hover:bg-blue-500 hover:text-white transition-all"
         >
           Sign Up
         </button>
@@ -520,112 +539,116 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
     {(hasStartedChatting && currentView === 'home' && isLoggedIn && activeChat) && (
       <button
         onClick={goBackToChat}
-        className="fixed left-4 top-4 z-50 p-3 rounded-full bg-[#2b2c33] hover:bg-[#3b3c44] border border-gray-600 transition-all flex items-center gap-2 text-blue-400 hover:text-blue-300"
+        className="fixed left-4 top-4 z-50 p-2 md:p-3 rounded-full bg-[#2b2c33] hover:bg-[#3b3c44] border border-gray-600 transition-all flex items-center gap-2 text-blue-400 hover:text-blue-300"
         title="Back to Chat"
       >
-        <ArrowLeft className="h-5 w-5" />
-        <span className="hidden sm:inline text-sm">Back to Chat</span>
+        <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+        <span className="hidden sm:inline text-xs md:text-sm">Back to Chat</span>
       </button>
     )}
 
-      <div className="flex justify-end items-center p-4 border-b border-gray-700/50 w-full">
-        {renderAuthDropdown()}
-        {renderLoginSignupButtons()}
+    {/* Header with improved responsive spacing to accommodate the badge */}
+    <div className="flex justify-end items-center p-4 border-b border-gray-700/50 w-full 
+                    pt-20 md:pt-18 sm:pt-16"> {/* Increased top padding for badge space */}
+      {renderAuthDropdown()}
+      {renderLoginSignupButtons()}
+    </div>
+    
+    <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
+      {hasStartedChatting && (
+        <div className="mb-4 md:mb-6">
+          <img
+            src="/images/lANDAi.png"
+            alt="LANDAi Logo"
+            className="h-12 md:h-16 w-auto mx-auto"
+          />
+        </div>
+      )}
+      
+      {!hasStartedChatting && (
+        <div className="mb-6 md:mb-8 mt-2 md:mt-4"> {/* Responsive spacing */}
+          <img
+            src="/images/lANDAi.png"    
+            alt="LANDAi Logo"
+            className="h-16 md:h-20 w-auto cursor-pointer transition duration-200 hover:opacity-80 mx-auto"
+          />
+        </div>
+      )}
+      
+      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-4 md:mb-6 text-center leading-tight px-2">
+        Everything you need <br className="hidden sm:inline" />to know about land in Ghana
+      </h1>
+      <p className="text-gray-300 text-base md:text-lg lg:text-xl mb-6 md:mb-8 text-center max-w-2xl leading-relaxed px-4">
+        How can I help you today?
+      </p>
+      
+      <div className="relative w-full max-w-md mb-4 md:mb-6 px-4">
+        <input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+          placeholder="I'm looking for..."
+          className="w-full pl-12 pr-16 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50 text-sm md:text-base"
+          disabled={!isLoggedIn && searchCount >= 3}
+        />
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+          <img src="/images/Vector-star.png" className="w-4 h-4" alt="Star" />
+        </div>
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1 md:gap-2">
+          <button
+            onClick={handleVoiceInput}
+            disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
+            className="p-1"
+          >
+            {isMicActive ? (
+              <Loader2 className="text-red-400 w-4 h-4 animate-spin" />
+            ) : (
+              <Mic className="w-4 h-4 text-blue-400 hover:text-blue-300 transition-colors" />
+            )}
+          </button>
+          <button
+            onClick={() => handleSendMessage()}
+            disabled={!inputValue.trim() || isLoading || (!isLoggedIn && searchCount >= 3)}
+            className="p-1 md:p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-3 h-3 md:w-4 md:h-4 text-white" />
+          </button>
+        </div>
       </div>
       
-      <div className="flex flex-col items-center justify-center flex-1 px-4 w-full">
-        {hasStartedChatting && (
-          <div className="mb-6">
-            <img
-              src="/images/lANDAi.png"
-              alt="LANDAi Logo"
-              className="h-16 w-auto mx-auto"
-            />
-          </div>
-        )}
-        
-        {!hasStartedChatting && (
-          <div className="mb-8">
-            <img
-              src="/images/lANDAi.png"    
-              alt="LANDAi Logo"
-              className="h-20 w-auto cursor-pointer transition duration-200 hover:opacity-80 mx-auto"
-            />
-          </div>
-        )}
-        
-        <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-400 to-blue-500 mb-6 text-center leading-tight">
-          Everything you need <br />to know about land in Ghana<br />
-        </h1>
-        <p className="text-gray-300 text-lg md:text-xl mb-8 text-center max-w-2xl leading-relaxed">How can I help you today?</p>
-        
-        <div className="relative w-full max-w-md mb-6">
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="I'm looking for..."
-            className="w-full pl-12 pr-16 py-3 bg-[#2b2c33] text-white rounded-full border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-50"
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 max-w-lg w-full mb-6 md:mb-8 px-4">
+        {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((suggestion) => (
+          <button
+            key={suggestion}
+            onClick={() => handleBubbleClick(suggestion)}
+            className="bg-[#3b3c44] text-white py-2.5 md:py-3 px-3 md:px-4 rounded-full text-xs md:text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50 border border-gray-600/30"
             disabled={!isLoggedIn && searchCount >= 3}
-          />
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-            <img src="/images/Vector-star.png" className="w-4 h-4" alt="Star" />
-          </div>
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
-            <button
-              onClick={handleVoiceInput}
-              disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
-              className="p-1"
-            >
-              {isMicActive ? (
-                <Loader2 className="text-red-400 w-4 h-4 animate-spin" />
-              ) : (
-                <Mic className="w-4 h-4 text-blue-400 hover:text-blue-300 transition-colors" />
-              )}
-            </button>
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!inputValue.trim() || isLoading || (!isLoggedIn && searchCount >= 3)}
-              className="p-1 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4 text-white" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full mb-8">
-          {['land ownership types', 'Land disputes in Spintex', 'The Land Act 2020', 'How to verify land'].map((suggestion) => (
-            <button
-              key={suggestion}
-              onClick={() => handleBubbleClick(suggestion)}
-              className="bg-[#3b3c44] text-white py-3 px-4 rounded-full text-sm hover:bg-[#4c4d55] transition-all disabled:opacity-50 border border-gray-600/30"
-              disabled={!isLoggedIn && searchCount >= 3}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-        
-        {!isLoggedIn && (
-          <div className="text-center text-sm text-gray-400 mb-6">
-            {searchCount < 3 ? (
-              <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
-            ) : (
-              <p className="text-red-400">Please login to continue searching</p>
-            )}
-          </div>
-        )}
+          >
+            {suggestion}
+          </button>
+        ))}
       </div>
+      
+      {!isLoggedIn && (
+        <div className="text-center text-xs md:text-sm text-gray-400 mb-4 md:mb-6 px-4">
+          {searchCount < 3 ? (
+            <p>You have {3 - searchCount} free search{searchCount !== 2 ? 'es' : ''} remaining</p>
+          ) : (
+            <p className="text-red-400">Please login to continue searching</p>
+          )}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 
   const renderChatContent = () => (
     <div className="flex flex-col h-full bg-[#1e1f24]">
-      <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-6 md:space-y-8 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex max-w-3xl mx-auto gap-3 ${
+            className={`flex max-w-3xl mx-auto gap-2 md:gap-3 ${
               msg.role === 'user' ? 'justify-end' : 'justify-start'
             }`}
           >
@@ -633,14 +656,14 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
               <div className="flex-shrink-0 mt-1">
                 <img
                   src="/images/Vector-star.png"
-                  className="h-4 w-4"
+                  className="h-3 w-3 md:h-4 md:w-4"
                   alt="AI"
                 />
               </div>
             )}
             <div className="flex flex-col gap-1">
               <div
-                className={`rounded-xl p-4 max-w-2xl shadow-lg ${
+                className={`rounded-xl p-3 md:p-4 max-w-2xl shadow-lg ${
                   msg.role === 'user'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
                     : 'bg-[#2e2f36] text-gray-100 border border-gray-700/50'
@@ -661,16 +684,16 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
                       remarkPlugins={[remarkGfm]}
                       components={{
                         p: ({ children }) => (
-                          <p className="mb-4 text-base leading-7 text-gray-100">{children}</p>
+                          <p className="mb-4 text-sm md:text-base leading-6 md:leading-7 text-gray-100">{children}</p>
                         ),
                         h1: ({ children }) => (
-                          <h1 className="text-2xl font-bold mb-4 text-white">{children}</h1>
+                          <h1 className="text-xl md:text-2xl font-bold mb-4 text-white">{children}</h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-xl font-semibold mb-3 text-white">{children}</h2>
+                          <h2 className="text-lg md:text-xl font-semibold mb-3 text-white">{children}</h2>
                         ),
                         h3: ({ children }) => (
-                          <h3 className="text-lg font-medium mb-2 text-white">{children}</h3>
+                          <h3 className="text-base md:text-lg font-medium mb-2 text-white">{children}</h3>
                         ),
                         ul: ({ children }) => (
                           <ul className="mb-4 pl-6 space-y-2">{children}</ul>
@@ -679,7 +702,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
                           <ol className="mb-4 pl-6 space-y-2">{children}</ol>
                         ),
                         li: ({ children }) => (
-                          <li className="text-base leading-6 text-gray-100">{children}</li>
+                          <li className="text-sm md:text-base leading-5 md:leading-6 text-gray-100">{children}</li>
                         ),
                         strong: ({ children }) => (
                           <strong className="font-semibold text-white">{children}</strong>
@@ -688,13 +711,13 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
                           <em className="italic text-gray-200">{children}</em>
                         ),
                         code: ({ children }) => (
-                          <code className="bg-gray-800 px-2 py-1 rounded text-sm font-mono text-blue-300 border border-gray-600">
+                          <code className="bg-gray-800 px-2 py-1 rounded text-xs md:text-sm font-mono text-blue-300 border border-gray-600">
                             {children}
                           </code>
                         ),
                         pre: ({ children }) => (
-                          <pre className="bg-gray-800 p-4 rounded-lg mb-4 overflow-x-auto border border-gray-600">
-                            <code className="text-sm font-mono text-gray-200">{children}</code>
+                          <pre className="bg-gray-800 p-3 md:p-4 rounded-lg mb-4 overflow-x-auto border border-gray-600">
+                            <code className="text-xs md:text-sm font-mono text-gray-200">{children}</code>
                           </pre>
                         ),
                         blockquote: ({ children }) => (
@@ -710,12 +733,12 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
                           </div>
                         ),
                         th: ({ children }) => (
-                          <th className="bg-gray-700 px-4 py-2 text-left font-semibold text-white border-b border-gray-600">
+                          <th className="bg-gray-700 px-3 md:px-4 py-2 text-left font-semibold text-white border-b border-gray-600 text-xs md:text-sm">
                             {children}
                           </th>
                         ),
                         td: ({ children }) => (
-                          <td className="px-4 py-2 text-gray-100 border-b border-gray-700 last:border-b-0">
+                          <td className="px-3 md:px-4 py-2 text-gray-100 border-b border-gray-700 last:border-b-0 text-xs md:text-sm">
                             {children}
                           </td>
                         ),
@@ -728,7 +751,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
               </div>
               {!msg.isLoading && (
                 <div
-                  className={`flex gap-2 justify-${
+                  className={`flex gap-1 md:gap-2 justify-${
                     msg.role === 'user' ? 'end' : 'start'
                   } px-1`}
                 >
@@ -767,13 +790,13 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       </div>
       
       {isLoading && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
+        <div className="fixed bottom-16 md:bottom-20 left-1/2 transform -translate-x-1/2 bg-[#2b2c33] px-3 md:px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-10 border border-gray-700">
           <div className="flex space-x-1">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <span className="text-sm text-white">Generating response</span>
+          <span className="text-xs md:text-sm text-white">Generating response</span>
           <button
             onClick={handleStopGeneration}
             className="ml-2 text-xs text-red-400 hover:text-red-300 flex items-center transition-colors"
@@ -786,41 +809,41 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         </div>
       )}
 
-      {/* Chat input - cleaned up without feedback button */}
-      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
+      {/* Responsive Chat Input */}
+      <div className="sticky bottom-0 p-2 md:p-4 bg-gradient-to-t from-[#1e1f24] via-[#1e1f24] to-transparent">
         <div className="relative max-w-3xl mx-auto">
-          <div className="flex items-center bg-[#2b2c33] rounded-xl px-4 py-3 shadow-lg border border-gray-700/30">
+          <div className="flex items-center bg-[#2b2c33] rounded-xl px-3 md:px-4 py-2 md:py-3 shadow-lg border border-gray-700/30">
             <img
               src="/images/Vector.svg"
               alt=""
-              className="h-8 w-8 mr-3 brightness-125"
+              className="h-6 w-6 md:h-8 md:w-8 mr-2 md:mr-3 brightness-125"
             />
             <input
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm"
+              className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-xs md:text-sm"
               placeholder="Ask a follow-up..."
               disabled={!isLoggedIn && searchCount >= 3}
             />
             <button
               onClick={handleVoiceInput}
               disabled={isMicActive || (!isLoggedIn && searchCount >= 3)}
-              className={`ml-3 transition-all ${isMicActive ? 'animate-pulse text-red-400' : 'text-blue-400 hover:text-blue-300'}`}
+              className={`ml-2 md:ml-3 transition-all ${isMicActive ? 'animate-pulse text-red-400' : 'text-blue-400 hover:text-blue-300'}`}
             >
               {isMicActive ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
               ) : (
-                <Mic className="h-4 w-4" />
+                <Mic className="h-3 w-3 md:h-4 md:w-4" />
               )}
             </button>
             <button
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isLoading || (!isLoggedIn && searchCount >= 3)}
-              className="ml-3 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-2 md:ml-3 p-1.5 md:p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="h-4 w-4 text-white" />
+              <Send className="h-3 w-3 md:h-4 md:w-4 text-white" />
             </button>
           </div>
         </div>
@@ -829,10 +852,12 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   );
 
   return (
-    <div className="flex h-screen bg-[#1e1f24] text-white">
-      {/* Sidebar - Only show when in chat mode or when logged in */}
+    <div className="flex h-screen bg-[#1e1f24] text-white overflow-hidden">
+      {/* Responsive Sidebar - Only show when in chat mode or when logged in */}
       {hasStartedChatting && currentView === 'chat' && (
-        <div className={`relative transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16'}`}>
+        <div className={`relative transition-all duration-300 ${
+          isSidebarOpen ? 'w-56 md:w-64' : 'w-12 md:w-16'
+        }`}>
           <Sidebar
             isLoading={isLoading}
             isLoggedIn={isLoggedIn}
@@ -873,14 +898,14 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {currentView === 'home' ? renderHomeContent() : renderChatContent()}
       </div>
       
       {/* Beta Test Badge - Only show on home page */}
       {currentView === 'home' && <LANDAiBetaBadge />}
       
-      {/* Floating Feedback Button - Always visible */}
+      {/* Floating Feedback Button - Always visible with responsive positioning */}
       <FloatingFeedbackButton onClick={openFeedbackForm} />
       
       {/* Modal components */}

@@ -27,7 +27,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'email' | 'social'>('email');
-  const [socialLoading, setSocialLoading] = useState<'google' | 'microsoft' | 'apple' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,29 +50,6 @@ const SignupModal: React.FC<SignupModalProps> = ({
       setError(err instanceof Error ? err.message : 'Signup failed');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
-    // Don't proceed if provider is not configured
-    if (provider !== 'google') {
-      setError(`${provider} login is not available yet`);
-      return;
-    }
-
-    setSocialLoading(provider);
-    setError('');
-    try {
-      const backendUrl = 'https://nomar.up.railway.app';
-      const authUrl = `${backendUrl}/auth/${provider}`;
-
-      sessionStorage.setItem('preAuthRoute', window.location.pathname);
-      window.location.href = authUrl;
-    } catch (err) {
-      setError(`Failed to start ${provider} login. Please try again.`);
-      console.error(`${provider} login error:`, err);
-    } finally {
-      setSocialLoading(null);
     }
   };
 
@@ -205,25 +181,17 @@ const SignupModal: React.FC<SignupModalProps> = ({
               </>
             ) : (
               <div className="space-y-4">
+                {/* Disabled Google Button */}
                 <Button
-                  onClick={() => handleSocialLogin('google')}
-                  className="w-full flex items-center justify-center gap-3 bg-white text-black font-medium py-3 hover:opacity-90 transition"
-                  disabled={!!socialLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#f3f3f3] text-gray-500 font-medium py-3 opacity-50 cursor-not-allowed"
+                  disabled={true}
                 >
-                  {socialLoading === 'google' ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <div className="w-5 h-5 flex items-center justify-center">
-                        <img
-                          src="/images/google-icon.jpeg"
-                          alt="Google"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      Continue with Google
-                    </>
-                  )}
+                  <img
+                    src="/images/google-icon.jpeg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                  Continue with Google (Coming Soon)
                 </Button>
                 
                 {/* Disabled Microsoft Button */}
